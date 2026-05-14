@@ -14,6 +14,7 @@ class CrawlRequest(BaseModel):
     level: str
     question_type: Optional[str] = None
     max_pages: int = 3
+    source: str = "dethitiengnhat"  # "dethitiengnhat" | "lophoctiengnhat"
 
 
 class CrawlResponse(BaseModel):
@@ -29,16 +30,19 @@ class SeedResponse(BaseModel):
 
 @router.post("/run", response_model=CrawlResponse)
 def run_crawler(payload: CrawlRequest, db: Session = Depends(get_db)):
-    """Trigger a web crawl for JLPT questions from dethitiengnhat.com."""
+    """Trigger a web crawl for JLPT questions. Source: dethitiengnhat | lophoctiengnhat."""
     try:
-        from backend.crawler.dethitiengnhat import DethitiengnhatCrawler
+        if payload.source == "lophoctiengnhat":
+            from backend.crawler.lophoctiengnhat import LophoctiengnhatCrawler
+            crawler = LophoctiengnhatCrawler()
+        else:
+            from backend.crawler.dethitiengnhat import DethitiengnhatCrawler
+            crawler = DethitiengnhatCrawler()
     except ImportError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Crawler module not available.",
         )
-
-    crawler = DethitiengnhatCrawler()
     question_types = (
         [payload.question_type]
         if payload.question_type

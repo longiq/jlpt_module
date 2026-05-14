@@ -70,10 +70,10 @@ function renderStats(data) {
   if (!el) return;
   const levels = ['N1','N2','N3','N4','N5'];
   const types = ['vocabulary','grammar','reading','listening'];
-  const typeLabels = { vocabulary: '語彙', grammar: '文法', reading: '読解', listening: '聴解' };
+  const typeLabels = { vocabulary: 'Từ vựng', grammar: 'Ngữ pháp', reading: 'Đọc hiểu', listening: 'Nghe hiểu' };
 
   el.innerHTML = `
-    <div class="stat-card"><div class="stat-number">${data.total}</div><div class="stat-label">総問題数</div></div>
+    <div class="stat-card"><div class="stat-number">${data.total}</div><div class="stat-label">Tổng câu hỏi</div></div>
     ${levels.map(l => `<div class="stat-card"><div class="stat-number">${data.by_level[l] || 0}</div><div class="stat-label">${l}</div></div>`).join('')}
     ${types.map(t => `<div class="stat-card"><div class="stat-number">${data.by_type[t] || 0}</div><div class="stat-label">${typeLabels[t]}</div></div>`).join('')}
   `;
@@ -85,11 +85,11 @@ async function startQuiz() {
   const qtype = document.getElementById('sel-type').value;
   const num = parseInt(document.getElementById('sel-num').value) || 10;
 
-  if (!level) { toast('レベルを選択してください', 'error'); return; }
+  if (!level) { toast('Vui lòng chọn cấp độ!', 'error'); return; }
 
   const btn = document.getElementById('btn-start');
   btn.disabled = true;
-  btn.textContent = '準備中...';
+  btn.textContent = 'Đang chuẩn bị...';
 
   try {
     const data = await apiFetch('/quiz/start', {
@@ -108,11 +108,11 @@ async function startQuiz() {
     showPage('quiz');
     renderQuestion();
     startTimer();
-    toast('クイズ開始！', 'success');
+    toast('Bắt đầu làm bài!', 'success');
   } catch {
   } finally {
     btn.disabled = false;
-    btn.textContent = 'クイズを開始する';
+    btn.textContent = 'Bắt đầu làm bài';
   }
 }
 
@@ -142,8 +142,7 @@ function updateTimerDisplay() {
 }
 
 function handleTimeUp() {
-  toast('時間切れ！', 'error');
-  // Auto-submit remaining unanswered
+  toast('Hết giờ!', 'error');
   submitQuiz(true);
 }
 
@@ -163,7 +162,7 @@ function renderQuestion() {
 
   // Progress
   document.getElementById('quiz-progress-text').textContent =
-    `問題 ${idx + 1} / ${total}`;
+    `Câu ${idx + 1} / ${total}`;
   document.getElementById('quiz-progress-bar').style.width =
     `${((idx + 1) / total) * 100}%`;
 
@@ -198,7 +197,7 @@ function renderQuestion() {
   // Explanation
   const expEl = document.getElementById('quiz-explanation');
   if (answered?.explanation) {
-    expEl.innerHTML = `<div class="exp-label">解説</div>${escHtml(answered.explanation)}`;
+    expEl.innerHTML = `<div class="exp-label">Giải thích</div>${escHtml(answered.explanation)}`;
     expEl.style.display = 'block';
   } else {
     expEl.style.display = 'none';
@@ -208,7 +207,7 @@ function renderQuestion() {
   document.getElementById('btn-prev').disabled = idx === 0;
   const isLast = idx === total - 1;
   const btnNext = document.getElementById('btn-next');
-  btnNext.textContent = isLast ? '結果を見る' : '次へ';
+  btnNext.textContent = isLast ? 'Xem kết quả' : 'Câu tiếp →';
   btnNext.className = `btn ${isLast ? 'btn-success' : 'btn-primary'}`;
 }
 
@@ -221,7 +220,7 @@ function getOptionClass(q, label, answered) {
 }
 
 function typeLabel(t) {
-  return { vocabulary: '語彙', grammar: '文法', reading: '読解', listening: '聴解' }[t] || t;
+  return { vocabulary: 'Từ vựng', grammar: 'Ngữ pháp', reading: 'Đọc hiểu', listening: 'Nghe hiểu' }[t] || t;
 }
 
 function escHtml(s) {
@@ -287,7 +286,7 @@ async function submitQuiz(forced = false) {
     const total = state.quiz.questions.length;
     if (answered < total) {
       const unanswered = total - answered;
-      if (!confirm(`まだ ${unanswered} 問未回答があります。結果を見ますか？`)) return;
+      if (!confirm(`Còn ${unanswered} câu chưa trả lời. Bạn có muốn xem kết quả không?`)) return;
     }
   }
 
@@ -303,21 +302,21 @@ async function submitQuiz(forced = false) {
 // ── Result ─────────────────────────────────────────────
 function renderResult(result) {
   const score = Math.round(result.score);
-  const grade = score >= 70 ? '合格 🎉' : score >= 50 ? 'もう少し 💪' : '要復習 📖';
+  const grade = score >= 70 ? 'Đạt 🎉' : score >= 50 ? 'Gần đạt 💪' : 'Cần ôn lại 📖';
 
   document.getElementById('result-score-num').textContent = `${score}%`;
   document.getElementById('result-grade').textContent = grade;
   document.getElementById('result-summary').textContent =
-    `${result.correct_count} / ${result.total_questions} 問正解 ・ ${result.level} ${result.question_type ? typeLabel(result.question_type) : '全種類'}`;
+    `${result.correct_count} / ${result.total_questions} câu đúng · ${result.level} ${result.question_type ? typeLabel(result.question_type) : 'Tất cả loại'}`;
 
   const listEl = document.getElementById('result-answers');
   listEl.innerHTML = result.answers.map((a, i) => `
     <div class="answer-item ${a.is_correct ? 'correct-item' : 'wrong-item'}">
       <div class="q-text">${i+1}. ${escHtml(a.question_text)}</div>
       <div class="a-row">
-        <span>あなた: <span class="${a.is_correct ? 'a-correct' : 'a-wrong'}">${a.user_answer || '未回答'}</span></span>
-        <span>正解: <span class="a-correct">${a.correct_answer}</span></span>
-        ${a.explanation ? `<span>解説: ${escHtml(a.explanation)}</span>` : ''}
+        <span>Bạn chọn: <span class="${a.is_correct ? 'a-correct' : 'a-wrong'}">${a.user_answer || 'Chưa trả lời'}</span></span>
+        <span>Đáp án đúng: <span class="a-correct">${a.correct_answer}</span></span>
+        ${a.explanation ? `<span>Giải thích: ${escHtml(a.explanation)}</span>` : ''}
       </div>
     </div>
   `).join('');
@@ -338,25 +337,25 @@ async function loadHistory() {
 function renderHistory(sessions) {
   const el = document.getElementById('history-list');
   if (!sessions.length) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>履歴がありません</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Chưa có lịch sử làm bài</p></div>';
     return;
   }
 
   el.innerHTML = sessions.map(s => {
     const score = s.score != null ? Math.round(s.score) : null;
     const passed = score != null && score >= 70;
-    const dt = new Date(s.started_at).toLocaleString('ja-JP');
+    const dt = new Date(s.started_at).toLocaleString('vi-VN');
     return `
       <div class="history-item">
         <div class="history-score ${score == null ? '' : passed ? 'pass' : 'fail'}">
           ${score != null ? score + '%' : '--'}
         </div>
         <div class="history-meta">
-          <strong>${s.level} ${s.question_type ? typeLabel(s.question_type) : '全種類'}</strong><br>
-          ${s.correct_count} / ${s.total_questions} 正解 ・ ${dt}
-          ${s.completed_at ? '' : ' <em>(未完了)</em>'}
+          <strong>${s.level} ${s.question_type ? typeLabel(s.question_type) : 'Tất cả loại'}</strong><br>
+          ${s.correct_count} / ${s.total_questions} câu đúng · ${dt}
+          ${s.completed_at ? '' : ' <em>(Chưa hoàn thành)</em>'}
         </div>
-        ${s.completed_at ? `<button class="btn btn-outline btn-sm" onclick="viewResult(${s.id})">詳細</button>` : ''}
+        ${s.completed_at ? `<button class="btn btn-outline btn-sm" onclick="viewResult(${s.id})">Chi tiết</button>` : ''}
       </div>
     `;
   }).join('');
@@ -373,7 +372,7 @@ async function viewResult(sessionId) {
 // ── Admin / Crawler ────────────────────────────────────
 function resetAdminLog() {
   const log = document.getElementById('crawl-log');
-  if (log) log.innerHTML = '<span class="log-info">ログがここに表示されます...</span>';
+  if (log) log.innerHTML = '<span class="log-info">Nhật ký sẽ hiển thị ở đây...</span>';
 }
 
 function addLog(msg, type = '') {
@@ -385,29 +384,30 @@ function addLog(msg, type = '') {
 }
 
 async function startCrawl() {
+  const source = document.getElementById('crawl-source').value;
   const level = document.getElementById('crawl-level').value;
   const qtype = document.getElementById('crawl-type').value;
   const pages = document.getElementById('crawl-pages').value || 3;
 
-  if (!level) { toast('レベルを選択してください', 'error'); return; }
+  if (!level) { toast('Vui lòng chọn cấp độ!', 'error'); return; }
 
   const btn = document.getElementById('btn-crawl');
   btn.disabled = true;
-  addLog(`クロール開始: ${level} / ${qtype || '全種類'} / 最大${pages}ページ`, 'info');
+  addLog(`Bắt đầu thu thập: ${source} · ${level} · ${qtype || 'Tất cả loại'} · tối đa ${pages} trang`, 'info');
 
   try {
     const res = await apiFetch('/crawler/run', {
       method: 'POST',
-      body: JSON.stringify({ level, question_type: qtype || null, max_pages: parseInt(pages) }),
+      body: JSON.stringify({ source, level, question_type: qtype || null, max_pages: parseInt(pages) }),
     });
-    addLog(`完了: ${res.added} 問追加, ${res.skipped} 問スキップ`, 'ok');
+    addLog(`Hoàn thành: thêm ${res.added} câu, bỏ qua ${res.skipped} câu`, 'ok');
     if (res.errors?.length) {
-      res.errors.forEach(e => addLog(`エラー: ${e}`, 'err'));
+      res.errors.forEach(e => addLog(`Lỗi: ${e}`, 'err'));
     }
     loadStats();
-    toast(`${res.added} 問追加しました`, 'success');
+    toast(`Đã thêm ${res.added} câu hỏi`, 'success');
   } catch (e) {
-    addLog(`クロール失敗: ${e.message}`, 'err');
+    addLog(`Thu thập thất bại: ${e.message}`, 'err');
   } finally {
     btn.disabled = false;
   }
@@ -416,12 +416,12 @@ async function startCrawl() {
 async function loadSeedData() {
   const btn = document.getElementById('btn-seed');
   btn.disabled = true;
-  addLog('サンプルデータを読み込み中...', 'info');
+  addLog('Đang nạp dữ liệu mẫu...', 'info');
   try {
     const res = await apiFetch('/crawler/seed', { method: 'POST' });
-    addLog(`完了: ${res.added} 問追加しました`, 'ok');
+    addLog(`Hoàn thành: đã thêm ${res.added} câu hỏi`, 'ok');
     loadStats();
-    toast(`${res.added} 問追加しました`, 'success');
+    toast(`Đã thêm ${res.added} câu hỏi`, 'success');
   } catch {
   } finally {
     btn.disabled = false;

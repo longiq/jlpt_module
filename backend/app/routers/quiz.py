@@ -181,7 +181,11 @@ def start_quiz(payload: QuizSessionCreate, db: Session = Depends(get_db)):
         )
 
     num = min(payload.num_questions, len(all_matching))
-    selected: list[Question] = random.sample(all_matching, num)
+    selected_raw: list[Question] = random.sample(all_matching, num)
+
+    # Sort by JLPT exam order: vocabulary → grammar → reading → listening
+    TYPE_ORDER = {"vocabulary": 0, "grammar": 1, "reading": 2, "listening": 3}
+    selected = sorted(selected_raw, key=lambda q: TYPE_ORDER.get(q.question_type, 9))
 
     # Persist the session first (flush to obtain session.id)
     session = QuizSession(
