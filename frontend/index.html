@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JLPT 問題バンク</title>
+  <title>JLPT Ngân hàng câu hỏi</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -11,107 +11,136 @@
 <!-- Header -->
 <div class="header">
   <div>
-    <div class="header-title" style="font-size:1.2rem;font-weight:800;">🎌 JLPT 問題バンク</div>
-    <div style="font-size:0.75rem;opacity:0.8;">日本語能力試験 練習システム</div>
+    <div class="header-title" style="font-size:1.2rem;font-weight:800;">🎌 JLPT Ngân hàng câu hỏi</div>
+    <div style="font-size:0.75rem;opacity:0.8;">Hệ thống luyện thi năng lực tiếng Nhật</div>
   </div>
   <div class="header-spacer"></div>
 </div>
 
 <!-- Nav -->
 <div class="nav-tabs">
-  <button class="nav-tab active" data-page="home">🏠 ホーム</button>
-  <button class="nav-tab" data-page="quiz">✏️ クイズ</button>
-  <button class="nav-tab" data-page="result">📊 結果</button>
-  <button class="nav-tab" data-page="history">📋 履歴</button>
-  <button class="nav-tab" data-page="admin">⚙️ 管理</button>
+  <button class="nav-tab active" data-page="home">🏠 Trang chủ</button>
+  <button class="nav-tab" data-page="quiz">✏️ Làm bài</button>
+  <button class="nav-tab" data-page="result">📊 Kết quả</button>
+  <button class="nav-tab" data-page="history">📋 Lịch sử</button>
+  <button class="nav-tab" data-page="admin">⚙️ Quản lý</button>
 </div>
 
 <div class="container">
 
-  <!-- ════ HOME PAGE ════ -->
+  <!-- ════ TRANG CHỦ ════ -->
   <div id="page-home" class="page active">
     <div class="hero">
-      <h2>JLPT 練習問題</h2>
-      <p>N1〜N5 の文法・語彙・読解問題で実力を試しましょう</p>
+      <h2>Luyện thi JLPT</h2>
+      <p>Thử sức với đề thi ngữ pháp, từ vựng và đọc hiểu từ N5 đến N1</p>
     </div>
 
     <div class="card">
-      <div class="card-title">📝 クイズ設定</div>
+      <div class="card-title">📝 Thiết lập bài thi</div>
       <div class="quiz-setup-grid">
         <div class="form-group">
-          <label class="form-label">レベル</label>
+          <label class="form-label">Cấp độ</label>
           <select id="sel-level" class="form-select">
-            <option value="">-- 選択 --</option>
-            <option value="N5">N5（入門）</option>
-            <option value="N4">N4（基礎）</option>
-            <option value="N3">N3（中級）</option>
-            <option value="N2">N2（上級）</option>
-            <option value="N1">N1（最上級）</option>
+            <option value="">-- Chọn cấp độ --</option>
+            <option value="N5">N5 (Sơ cấp)</option>
+            <option value="N4">N4 (Cơ bản)</option>
+            <option value="N3">N3 (Trung cấp)</option>
+            <option value="N2">N2 (Cao cấp)</option>
+            <option value="N1">N1 (Thượng cấp)</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">問題種類</label>
+          <label class="form-label">Loại câu hỏi</label>
           <select id="sel-type" class="form-select">
-            <option value="">全種類</option>
-            <option value="vocabulary">語彙（文字・語彙）</option>
-            <option value="grammar">文法</option>
-            <option value="reading">読解</option>
-            <option value="listening">聴解</option>
+            <option value="">Tất cả loại</option>
+            <option value="vocabulary">Từ vựng (文字・語彙)</option>
+            <option value="grammar">Ngữ pháp (文法)</option>
+            <option value="reading">Đọc hiểu (読解)</option>
+            <option value="listening">Nghe hiểu (聴解)</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">問題数</label>
+          <label class="form-label">Số câu hỏi</label>
           <select id="sel-num" class="form-select">
-            <option value="5">5問</option>
-            <option value="10" selected>10問</option>
-            <option value="20">20問</option>
-            <option value="30">30問</option>
+            <option value="5">5 câu</option>
+            <option value="10" selected>10 câu</option>
+            <option value="20">20 câu</option>
+            <option value="30">30 câu</option>
           </select>
         </div>
       </div>
       <button id="btn-start" class="btn btn-primary btn-lg" onclick="startQuiz()">
-        ▶ クイズを開始する
+        ▶ Bắt đầu làm bài
       </button>
     </div>
 
     <div class="card">
-      <div class="card-title">📊 問題統計</div>
+      <div class="card-title">📊 Thống kê câu hỏi</div>
       <div id="stats-grid" class="stats-grid">
-        <div class="stat-card"><div class="stat-number">…</div><div class="stat-label">読み込み中</div></div>
+        <div class="stat-card"><div class="stat-number">…</div><div class="stat-label">Đang tải...</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">📖 JLPT 試験構成について</div>
+      <div class="card-title">📖 Cấu trúc đề thi JLPT</div>
       <div style="font-size:0.88rem;line-height:1.9;color:var(--text-muted);">
         <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
           <thead>
             <tr style="background:var(--bg);">
-              <th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">レベル</th>
-              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">語彙</th>
-              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">文法</th>
-              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">読解</th>
-              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">聴解</th>
-              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">合格点</th>
+              <th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">Cấp độ</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">Từ vựng</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">Ngữ pháp</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">Đọc hiểu</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">Nghe hiểu</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--border);">Điểm đỗ</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N5">N5</span></td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">25分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="2">50分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">30分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">80/180点</td></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N4">N4</span></td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">25分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="2">55分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">35分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">90/180点</td></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N3">N3</span></td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">30分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">70分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">40分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">95/180点</td><td></td></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N2">N2</span></td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="2">105分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);"></td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">50分</td><td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">90/180点</td></tr>
-            <tr><td style="padding:8px;"><span class="badge badge-N1">N1</span></td><td style="text-align:center;padding:8px;" colspan="2">110分</td><td style="text-align:center;padding:8px;"></td><td style="text-align:center;padding:8px;">60分</td><td style="text-align:center;padding:8px;">100/180点</td></tr>
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N5">N5</span></td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">25 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="2">50 phút (gộp)</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">30 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">80/180</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N4">N4</span></td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">25 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="2">55 phút (gộp)</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">35 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">90/180</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N3">N3</span></td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">30 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="2">70 phút (gộp)</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">40 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">95/180</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-N2">N2</span></td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);" colspan="3">105 phút (gộp)</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">50 phút</td>
+              <td style="text-align:center;padding:8px;border-bottom:1px solid var(--border);">90/180</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;"><span class="badge badge-N1">N1</span></td>
+              <td style="text-align:center;padding:8px;" colspan="3">110 phút (gộp)</td>
+              <td style="text-align:center;padding:8px;">60 phút</td>
+              <td style="text-align:center;padding:8px;">100/180</td>
+            </tr>
           </tbody>
         </table>
+        <p style="margin-top:10px;font-size:0.78rem;">"Gộp" = Ngữ pháp và Đọc hiểu thi chung trong một phần thi.</p>
       </div>
     </div>
   </div>
 
-  <!-- ════ QUIZ PAGE ════ -->
+  <!-- ════ TRANG LÀM BÀI ════ -->
   <div id="page-quiz" class="page">
     <div class="quiz-header">
       <div class="quiz-progress-info">
-        <div id="quiz-progress-text" class="quiz-progress-text">問題 1 / 10</div>
+        <div id="quiz-progress-text" class="quiz-progress-text">Câu 1 / 10</div>
         <div class="progress-bar-wrap">
           <div id="quiz-progress-bar" class="progress-bar" style="width:10%"></div>
         </div>
@@ -124,80 +153,87 @@
 
       <div id="quiz-passage" class="passage-box" style="display:none;"></div>
 
-      <div id="quiz-question-text" class="question-text">問題を読み込み中...</div>
+      <div id="quiz-question-text" class="question-text">Đang tải câu hỏi...</div>
 
       <div id="quiz-options" class="options-grid"></div>
 
       <div id="quiz-explanation" class="explanation-box" style="display:none;"></div>
 
       <div class="quiz-nav">
-        <button id="btn-prev" class="btn btn-outline" onclick="prevQuestion()" disabled>← 前へ</button>
-        <button id="btn-next" class="btn btn-primary" onclick="nextQuestion()">次へ →</button>
+        <button id="btn-prev" class="btn btn-outline" onclick="prevQuestion()" disabled>← Câu trước</button>
+        <button id="btn-next" class="btn btn-primary" onclick="nextQuestion()">Câu tiếp →</button>
       </div>
     </div>
   </div>
 
-  <!-- ════ RESULT PAGE ════ -->
+  <!-- ════ TRANG KẾT QUẢ ════ -->
   <div id="page-result" class="page">
     <div class="card result-score">
       <div class="score-circle">
         <div id="result-score-num" class="score-number">--</div>
-        <div class="score-label">スコア</div>
+        <div class="score-label">Điểm</div>
       </div>
       <div id="result-grade" class="result-grade">--</div>
       <div id="result-summary" style="color:var(--text-muted);margin-top:8px;font-size:0.9rem;">--</div>
       <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="retryQuiz()">🔄 もう一度</button>
-        <button class="btn btn-outline" onclick="showPage('history')">📋 履歴を見る</button>
+        <button class="btn btn-primary" onclick="retryQuiz()">🔄 Làm lại</button>
+        <button class="btn btn-outline" onclick="showPage('history')">📋 Xem lịch sử</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">📝 回答詳細</div>
+      <div class="card-title">📝 Chi tiết đáp án</div>
       <div id="result-answers" class="answers-list"></div>
     </div>
   </div>
 
-  <!-- ════ HISTORY PAGE ════ -->
+  <!-- ════ TRANG LỊCH SỬ ════ -->
   <div id="page-history" class="page">
     <div class="card">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>📋 クイズ履歴</span>
-        <button class="btn btn-outline btn-sm" onclick="loadHistory()">更新</button>
+        <span>📋 Lịch sử làm bài</span>
+        <button class="btn btn-outline btn-sm" onclick="loadHistory()">Làm mới</button>
       </div>
       <div id="history-list" class="history-list">
-        <div class="empty-state"><div class="icon">📋</div><p>読み込み中...</p></div>
+        <div class="empty-state"><div class="icon">📋</div><p>Đang tải...</p></div>
       </div>
     </div>
   </div>
 
-  <!-- ════ ADMIN PAGE ════ -->
+  <!-- ════ TRANG QUẢN LÝ ════ -->
   <div id="page-admin" class="page">
     <div class="card">
-      <div class="card-title">⚙️ 問題データ管理</div>
+      <div class="card-title">⚙️ Quản lý dữ liệu câu hỏi</div>
 
       <div style="margin-bottom:20px;">
-        <div class="card-title" style="font-size:0.95rem;">📥 サンプルデータ</div>
+        <div class="card-title" style="font-size:0.95rem;">📥 Dữ liệu mẫu</div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
-          N1〜N5 の語彙・文法・読解サンプル問題（約100問）をデータベースに追加します。
+          Nạp khoảng 100 câu hỏi mẫu N1–N5 (từ vựng, ngữ pháp, đọc hiểu) vào cơ sở dữ liệu.
         </p>
         <button id="btn-seed" class="btn btn-success" onclick="loadSeedData()">
-          📥 サンプルデータを読み込む
+          📥 Nạp dữ liệu mẫu
         </button>
       </div>
 
       <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
 
-      <div class="card-title" style="font-size:0.95rem;">🕷️ Webクロール</div>
+      <div class="card-title" style="font-size:0.95rem;">🕷️ Thu thập dữ liệu web</div>
       <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">
-        日本語学習サイトから問題を自動収集します。サイトがアクセスをブロックする場合は失敗することがあります。
+        Tự động thu thập câu hỏi từ các trang học tiếng Nhật. Có thể thất bại nếu trang web chặn truy cập tự động.
       </p>
 
       <div class="crawl-options">
         <div class="form-group">
-          <label class="form-label">レベル</label>
+          <label class="form-label">Nguồn dữ liệu</label>
+          <select id="crawl-source" class="form-select">
+            <option value="dethitiengnhat">dethitiengnhat.com</option>
+            <option value="lophoctiengnhat">lophoctiengnhat.com</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cấp độ</label>
           <select id="crawl-level" class="form-select">
-            <option value="">-- 選択 --</option>
+            <option value="">-- Chọn --</option>
             <option value="N5">N5</option>
             <option value="N4">N4</option>
             <option value="N3">N3</option>
@@ -206,33 +242,33 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">問題種類</label>
+          <label class="form-label">Loại câu hỏi</label>
           <select id="crawl-type" class="form-select">
-            <option value="">全種類</option>
-            <option value="vocabulary">語彙</option>
-            <option value="grammar">文法</option>
-            <option value="reading">読解</option>
+            <option value="">Tất cả loại</option>
+            <option value="vocabulary">Từ vựng</option>
+            <option value="grammar">Ngữ pháp</option>
+            <option value="reading">Đọc hiểu</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">最大ページ数</label>
+          <label class="form-label">Số trang tối đa</label>
           <select id="crawl-pages" class="form-select">
-            <option value="1">1ページ</option>
-            <option value="3" selected>3ページ</option>
-            <option value="5">5ページ</option>
-            <option value="10">10ページ</option>
+            <option value="1">1 trang</option>
+            <option value="3" selected>3 trang</option>
+            <option value="5">5 trang</option>
+            <option value="10">10 trang</option>
           </select>
         </div>
       </div>
 
       <button id="btn-crawl" class="btn btn-primary" onclick="startCrawl()">
-        🕷️ クロール開始
+        🕷️ Bắt đầu thu thập
       </button>
 
       <div style="margin-top:16px;">
-        <div class="form-label">実行ログ</div>
+        <div class="form-label">Nhật ký thực thi</div>
         <div id="crawl-log" class="log-box">
-          <span class="log-info">ログがここに表示されます...</span>
+          <span class="log-info">Nhật ký sẽ hiển thị ở đây...</span>
         </div>
       </div>
     </div>
