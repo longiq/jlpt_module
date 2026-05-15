@@ -6,3 +6,9 @@ venv/
 data/jlpt.db
 *.db
 .env
+
+# Media files — stored locally, not in git
+static/audio/*
+static/images/*
+!static/audio/.gitkeep
+!static/images/.gitkeep
