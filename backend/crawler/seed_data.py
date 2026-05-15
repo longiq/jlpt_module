@@ -1528,35 +1528,36 @@ _N1_READING: list[dict] = [
 # ---------------------------------------------------------------------------
 
 def get_seed_questions() -> list[dict]:
-    """
-    Return the complete list of JLPT-style seed questions.
-
-    Breakdown
-    ---------
-    * N5: 8 vocabulary + 8 grammar + 4 reading = 20 questions
-    * N4: 8 vocabulary + 8 grammar + 4 reading = 20 questions
-    * N3: 8 vocabulary + 8 grammar + 4 reading = 20 questions
-    * N2: 8 vocabulary + 8 grammar + 4 reading = 20 questions
-    * N1: 8 vocabulary + 8 grammar + 4 reading = 20 questions
-    Total: 100 questions
-    """
-    return (
-        _N5_VOCAB
-        + _N5_GRAMMAR
-        + _N5_READING
-        + _N4_VOCAB
-        + _N4_GRAMMAR
-        + _N4_READING
-        + _N3_VOCAB
-        + _N3_GRAMMAR
-        + _N3_READING
-        + _N2_VOCAB
-        + _N2_GRAMMAR
-        + _N2_READING
-        + _N1_VOCAB
-        + _N1_GRAMMAR
-        + _N1_READING
+    """Return all built-in JLPT seed questions (base + extended sets)."""
+    base = (
+        _N5_VOCAB + _N5_GRAMMAR + _N5_READING
+        + _N4_VOCAB + _N4_GRAMMAR + _N4_READING
+        + _N3_VOCAB + _N3_GRAMMAR + _N3_READING
+        + _N2_VOCAB + _N2_GRAMMAR + _N2_READING
+        + _N1_VOCAB + _N1_GRAMMAR + _N1_READING
     )
+    extended: list[dict] = []
+    try:
+        from .seed_data_n5_n4 import get_n5_n4_questions
+        extended += get_n5_n4_questions()
+    except ImportError:
+        pass
+    try:
+        from .seed_data_n3 import get_n3_questions
+        extended += get_n3_questions()
+    except ImportError:
+        pass
+    try:
+        from .seed_data_n2 import get_n2_questions
+        extended += get_n2_questions()
+    except ImportError:
+        pass
+    try:
+        from .seed_data_n1 import get_n1_questions
+        extended += get_n1_questions()
+    except ImportError:
+        pass
+    return base + extended
 
 
 def seed_database(db_session) -> None:
