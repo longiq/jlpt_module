@@ -31,6 +31,7 @@ class Question(Base):
     explanation = Column(Text, nullable=True)
     source_url = Column(String, nullable=True)
     audio_url = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)          # optional image for listening questions
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     quiz_answers = relationship("QuizAnswer", back_populates="question")

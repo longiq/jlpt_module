@@ -61,6 +61,20 @@ def on_startup() -> None:
     # Create all declared tables (no-op if they already exist)
     Base.metadata.create_all(bind=engine)
 
+    # Migrate: add new nullable columns to existing tables if missing
+    with engine.connect() as conn:
+        for col, col_type in [("image_url", "TEXT")]:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        f"ALTER TABLE questions ADD COLUMN {col} {col_type}"
+                    )
+                )
+                conn.commit()
+                print(f"[migration] Added column questions.{col}")
+            except Exception:
+                pass  # column already exists
+
     # Always sync seed questions on startup (insert missing, skip duplicates)
     db = SessionLocal()
     try:

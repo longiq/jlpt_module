@@ -59,6 +59,7 @@ class QuestionForQuiz(BaseModel):
     question_text: str
     options: dict[str, str]       # {"A": "...", "B": "...", "C": "...", "D": "..."} — already shuffled
     audio_url: Optional[str] = None
+    image_url: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

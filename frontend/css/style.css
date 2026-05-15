@@ -359,7 +359,21 @@ body {
 }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 
-/* ── Listening Box ── */
+/* ── Listening Media ── */
+.audio-player {
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 8px;
+  accent-color: var(--primary);
+}
+.listening-image {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
 .listening-box {
   background: #f0f4ff;
   border-left: 4px solid #4f8ef7;

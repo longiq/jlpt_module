@@ -224,12 +224,33 @@ function renderQuestion() {
   document.getElementById('quiz-level-badge').innerHTML =
     `<span class="badge badge-${q.level}">${q.level}</span> <span class="badge badge-${q.question_type}">${typeLabel(q.question_type)}</span>`;
 
+  // Listening media (audio player + optional image)
+  const mediaEl = document.getElementById('quiz-listening-media');
+  if (q.question_type === 'listening') {
+    let mediaHtml = '';
+    if (q.image_url) {
+      mediaHtml += `<img src="${escHtml(q.image_url)}" alt="Hình minh họa" class="listening-image">`;
+    }
+    if (q.audio_url) {
+      mediaHtml += `
+        <div class="listening-label">🎧 Nhấn play để nghe</div>
+        <audio controls class="audio-player" src="${escHtml(q.audio_url)}">
+          Trình duyệt không hỗ trợ audio.
+        </audio>`;
+    }
+    mediaEl.innerHTML = mediaHtml;
+    mediaEl.style.display = (q.audio_url || q.image_url) ? 'block' : 'none';
+  } else {
+    mediaEl.innerHTML = '';
+    mediaEl.style.display = 'none';
+  }
+
   // Passage / Listening transcript
   const passageEl = document.getElementById('quiz-passage');
   if (q.passage) {
     const isListening = q.question_type === 'listening';
     passageEl.innerHTML = isListening
-      ? `<div class="listening-label">🎧 Nội dung nghe</div>${escHtml(q.passage)}`
+      ? `<div class="listening-label">📝 Nội dung hội thoại</div>${escHtml(q.passage)}`
       : escHtml(q.passage);
     passageEl.className = `passage-box${isListening ? ' listening-box' : ''}`;
     passageEl.style.display = 'block';
