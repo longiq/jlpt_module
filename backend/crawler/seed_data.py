@@ -1557,6 +1557,11 @@ def get_seed_questions() -> list[dict]:
         extended += get_n1_questions()
     except ImportError:
         pass
+    try:
+        from .seed_data_listening_demo import get_listening_demo_questions
+        extended += get_listening_demo_questions()
+    except ImportError:
+        pass
     return base + extended
 
 
