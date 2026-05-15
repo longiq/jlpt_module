@@ -68,15 +68,53 @@ async function loadStats() {
 function renderStats(data) {
   const el = document.getElementById('stats-grid');
   if (!el) return;
-  const levels = ['N1','N2','N3','N4','N5'];
+  const levels = ['N5','N4','N3','N2','N1'];
   const types = ['vocabulary','grammar','reading','listening'];
   const typeLabels = { vocabulary: 'Từ vựng', grammar: 'Ngữ pháp', reading: 'Đọc hiểu', listening: 'Nghe hiểu' };
+  const typeColors = { vocabulary: '#4f8ef7', grammar: '#f7914f', reading: '#4fc78e', listening: '#c44ff7' };
+  const blt = data.by_level_type || {};
+
+  const levelCards = levels.map(l => {
+    const total = data.by_level[l] || 0;
+    const breakdown = types.map(t => {
+      const cnt = (blt[l] && blt[l][t]) || 0;
+      const pct = total ? Math.round(cnt / total * 100) : 0;
+      return `
+        <div class="stat-type-row">
+          <span class="stat-type-dot" style="background:${typeColors[t]}"></span>
+          <span class="stat-type-label">${typeLabels[t]}</span>
+          <span class="stat-type-count">${cnt}</span>
+        </div>`;
+    }).join('');
+    return `
+      <div class="stat-level-card" onclick="toggleLevelDetail(this)">
+        <div class="stat-level-header">
+          <span class="badge badge-${l}">${l}</span>
+          <span class="stat-level-total">${total} câu</span>
+          <span class="stat-expand-icon">▼</span>
+        </div>
+        <div class="stat-level-detail" style="display:none;">
+          ${breakdown}
+        </div>
+      </div>`;
+  }).join('');
 
   el.innerHTML = `
-    <div class="stat-card"><div class="stat-number">${data.total}</div><div class="stat-label">Tổng câu hỏi</div></div>
-    ${levels.map(l => `<div class="stat-card"><div class="stat-number">${data.by_level[l] || 0}</div><div class="stat-label">${l}</div></div>`).join('')}
-    ${types.map(t => `<div class="stat-card"><div class="stat-number">${data.by_type[t] || 0}</div><div class="stat-label">${typeLabels[t]}</div></div>`).join('')}
+    <div class="stat-total-card">
+      <div class="stat-number">${data.total}</div>
+      <div class="stat-label">Tổng câu hỏi</div>
+    </div>
+    <div class="stat-levels-list">${levelCards}</div>
   `;
+}
+
+function toggleLevelDetail(card) {
+  const detail = card.querySelector('.stat-level-detail');
+  const icon = card.querySelector('.stat-expand-icon');
+  const open = detail.style.display === 'none';
+  detail.style.display = open ? 'block' : 'none';
+  icon.textContent = open ? '▲' : '▼';
+  card.classList.toggle('expanded', open);
 }
 
 // ── Quiz Mode Toggle ───────────────────────────────────

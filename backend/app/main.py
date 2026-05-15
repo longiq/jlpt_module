@@ -61,19 +61,36 @@ def on_startup() -> None:
     # Create all declared tables (no-op if they already exist)
     Base.metadata.create_all(bind=engine)
 
-    # Seed the database when the questions table is empty
+    # Always sync seed questions on startup (insert missing, skip duplicates)
     db = SessionLocal()
     try:
-        count: int = db.query(func.count(Question.id)).scalar() or 0
-        if count == 0:
+        try:
             try:
-                try:
-                    from backend.crawler.seed_data import seed_database
-                except ImportError:
-                    from ..crawler.seed_data import seed_database  # type: ignore[import]
-                seed_database(db)
-            except Exception:
-                pass  # seed_data not available — skip silently
+                from backend.crawler.seed_data import get_seed_questions
+            except ImportError:
+                from ..crawler.seed_data import get_seed_questions  # type: ignore[import]
+
+            questions = get_seed_questions()
+            added = 0
+            for q in questions:
+                exists = (
+                    db.query(Question)
+                    .filter(
+                        Question.level == q["level"],
+                        Question.question_text == q["question_text"],
+                    )
+                    .first()
+                )
+                if not exists:
+                    db.add(Question(**q))
+                    added += 1
+            if added:
+                db.commit()
+                print(f"[startup] Seeded {added} new question(s).")
+            else:
+                print("[startup] Seed data already up to date.")
+        except Exception as e:
+            print(f"[startup] Seed skipped: {e}")
     finally:
         db.close()
 
