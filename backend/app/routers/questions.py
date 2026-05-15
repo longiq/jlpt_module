@@ -18,32 +18,50 @@ router = APIRouter(tags=["questions"])
 
 @router.get("/stats/summary")
 def question_stats(db: Session = Depends(get_db)):
-    """Return total question count broken down by JLPT level and question type."""
+    """Return total question count with per-level type breakdown."""
     total = db.query(func.count(Question.id)).scalar()
 
+    LEVELS = ("N1", "N2", "N3", "N4", "N5")
+    TYPES = ("vocabulary", "grammar", "reading", "listening")
+
+    # Per-level totals
     level_rows = (
         db.query(Question.level, func.count(Question.id))
         .group_by(Question.level)
         .all()
     )
     by_level: dict[str, int] = {row[0]: row[1] for row in level_rows}
-    # Ensure all JLPT levels appear even when count is 0
-    for lvl in ("N1", "N2", "N3", "N4", "N5"):
+    for lvl in LEVELS:
         by_level.setdefault(lvl, 0)
 
+    # Per-type totals (global)
     type_rows = (
         db.query(Question.question_type, func.count(Question.id))
         .group_by(Question.question_type)
         .all()
     )
     by_type: dict[str, int] = {row[0]: row[1] for row in type_rows}
-    for qt in ("vocabulary", "grammar", "reading", "listening"):
+    for qt in TYPES:
         by_type.setdefault(qt, 0)
+
+    # Per-level per-type breakdown
+    detail_rows = (
+        db.query(Question.level, Question.question_type, func.count(Question.id))
+        .group_by(Question.level, Question.question_type)
+        .all()
+    )
+    by_level_type: dict[str, dict[str, int]] = {
+        lvl: {qt: 0 for qt in TYPES} for lvl in LEVELS
+    }
+    for lvl, qt, cnt in detail_rows:
+        if lvl in by_level_type and qt in by_level_type[lvl]:
+            by_level_type[lvl][qt] = cnt
 
     return {
         "total": total,
         "by_level": by_level,
         "by_type": by_type,
+        "by_level_type": by_level_type,
     }
 
 
