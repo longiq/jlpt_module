@@ -359,6 +359,39 @@ body {
 }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 
+/* ── Listening Controls ── */
+.btn-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #4f8ef7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+.btn-listen:hover { background: #2d6fd4; }
+.btn-listen-toggle {
+  background: transparent;
+  color: #4f8ef7;
+  border: 1.5px solid #4f8ef7;
+  margin-left: 8px;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+}
+.btn-listen-toggle:hover { background: #eef4ff; }
+.audio-loading {
+  color: #4f8ef7;
+  font-size: 0.9rem;
+  padding: 10px 0;
+  font-weight: 500;
+}
+
 /* ── Listening Media ── */
 .audio-player {
   width: 100%;

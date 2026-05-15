@@ -10,6 +10,7 @@ from .database import SessionLocal, engine
 from .models import Base, Question
 from .routers import questions, quiz
 from .routers import crawler as crawler_router_module
+from .routers import audio as audio_router_module
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(questions.router, prefix="/questions")
 app.include_router(quiz.router, prefix="/quiz")
 app.include_router(crawler_router_module.router, prefix="/crawler")
+app.include_router(audio_router_module.router, prefix="/audio-api")
 
 # ---------------------------------------------------------------------------
 # Startup: create DB tables, optionally seed data
