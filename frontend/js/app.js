@@ -78,7 +78,6 @@ function renderStats(data) {
     const total = data.by_level[l] || 0;
     const breakdown = types.map(t => {
       const cnt = (blt[l] && blt[l][t]) || 0;
-      const pct = total ? Math.round(cnt / total * 100) : 0;
       return `
         <div class="stat-type-row">
           <span class="stat-type-dot" style="background:${typeColors[t]}"></span>
@@ -93,17 +92,12 @@ function renderStats(data) {
           <span class="stat-level-total">${total} câu</span>
           <span class="stat-expand-icon">▼</span>
         </div>
-        <div class="stat-level-detail" style="display:none;">
-          ${breakdown}
-        </div>
+        <div class="stat-level-detail" style="display:none;">${breakdown}</div>
       </div>`;
   }).join('');
 
   el.innerHTML = `
-    <div class="stat-total-card">
-      <div class="stat-number">${data.total}</div>
-      <div class="stat-label">Tổng câu hỏi</div>
-    </div>
+    <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;">Tổng: <strong style="color:var(--text)">${data.total} câu hỏi</strong></div>
     <div class="stat-levels-list">${levelCards}</div>
   `;
 }
@@ -230,10 +224,14 @@ function renderQuestion() {
   document.getElementById('quiz-level-badge').innerHTML =
     `<span class="badge badge-${q.level}">${q.level}</span> <span class="badge badge-${q.question_type}">${typeLabel(q.question_type)}</span>`;
 
-  // Passage
+  // Passage / Listening transcript
   const passageEl = document.getElementById('quiz-passage');
   if (q.passage) {
-    passageEl.textContent = q.passage;
+    const isListening = q.question_type === 'listening';
+    passageEl.innerHTML = isListening
+      ? `<div class="listening-label">🎧 Nội dung nghe</div>${escHtml(q.passage)}`
+      : escHtml(q.passage);
+    passageEl.className = `passage-box${isListening ? ' listening-box' : ''}`;
     passageEl.style.display = 'block';
   } else {
     passageEl.style.display = 'none';

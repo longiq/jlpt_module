@@ -359,6 +359,19 @@ body {
 }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 
+/* ── Listening Box ── */
+.listening-box {
+  background: #f0f4ff;
+  border-left: 4px solid #4f8ef7;
+}
+.listening-label {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #4f8ef7;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
 /* ── Stats Panel ── */
 .stat-total-card {
   text-align: center;
