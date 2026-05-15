@@ -3,6 +3,7 @@ const API = '';  // same origin
 // ── State ──────────────────────────────────────────────
 const state = {
   currentPage: 'home',
+  quizMode: 'practice',  // 'practice' | 'full'
   quiz: {
     sessionId: null,
     questions: [],
@@ -25,9 +26,8 @@ function showPage(name) {
   document.querySelector(`.nav-tab[data-page="${name}"]`)?.classList.add('active');
   state.currentPage = name;
 
-  if (name === 'home') loadStats();
   if (name === 'history') loadHistory();
-  if (name === 'admin') resetAdminLog();
+  if (name === 'admin') { resetAdminLog(); loadStats(); }
 }
 
 // ── Toast ──────────────────────────────────────────────
@@ -79,13 +79,32 @@ function renderStats(data) {
   `;
 }
 
+// ── Quiz Mode Toggle ───────────────────────────────────
+function setQuizMode(mode) {
+  state.quizMode = mode;
+  const isPractice = mode === 'practice';
+  document.getElementById('practice-options').style.display = isPractice ? '' : 'none';
+  document.getElementById('full-exam-options').style.display = isPractice ? 'none' : '';
+  document.getElementById('btn-mode-practice').className = `btn btn-sm ${isPractice ? 'btn-primary' : 'btn-outline'}`;
+  document.getElementById('btn-mode-full').className = `btn btn-sm ${isPractice ? 'btn-outline' : 'btn-primary'}`;
+}
+
 // ── Start Quiz ─────────────────────────────────────────
 async function startQuiz() {
-  const level = document.getElementById('sel-level').value;
-  const qtype = document.getElementById('sel-type').value;
-  const num = parseInt(document.getElementById('sel-num').value) || 10;
+  const isFullExam = state.quizMode === 'full';
+  let level, qtype, num, payload;
 
-  if (!level) { toast('Vui lòng chọn cấp độ!', 'error'); return; }
+  if (isFullExam) {
+    level = document.getElementById('sel-level-full').value;
+    if (!level) { toast('Vui lòng chọn cấp độ!', 'error'); return; }
+    payload = { level, full_exam: true, num_questions: 200 };
+  } else {
+    level = document.getElementById('sel-level').value;
+    qtype = document.getElementById('sel-type').value;
+    num = parseInt(document.getElementById('sel-num').value) || 10;
+    if (!level) { toast('Vui lòng chọn cấp độ!', 'error'); return; }
+    payload = { level, question_type: qtype || null, num_questions: num };
+  }
 
   const btn = document.getElementById('btn-start');
   btn.disabled = true;
@@ -94,15 +113,18 @@ async function startQuiz() {
   try {
     const data = await apiFetch('/quiz/start', {
       method: 'POST',
-      body: JSON.stringify({ level, question_type: qtype || null, num_questions: num }),
+      body: JSON.stringify(payload),
     });
+
+    const totalQ = data.questions.length;
+    const totalMins = data.total_minutes || totalQ;  // full_exam returns minutes, else 1 min/q
 
     state.quiz.sessionId = data.session_id;
     state.quiz.questions = data.questions;
     state.quiz.currentIndex = 0;
     state.quiz.answers = {};
     state.quiz.timers = {};
-    state.quiz.totalTime = num * 60;  // 1 min per question default
+    state.quiz.totalTime = totalMins * 60;
     state.quiz.timeLeft = state.quiz.totalTime;
 
     showPage('quiz');

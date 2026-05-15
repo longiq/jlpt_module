@@ -20,6 +20,14 @@ from ..schemas import (
 
 router = APIRouter(tags=["quiz"])
 
+JLPT_STRUCTURE: dict[str, dict] = {
+    "N5": {"vocabulary": 25, "grammar": 16, "reading": 9,  "listening": 12, "minutes": 105},
+    "N4": {"vocabulary": 25, "grammar": 16, "reading": 12, "listening": 14, "minutes": 115},
+    "N3": {"vocabulary": 25, "grammar": 24, "reading": 19, "listening": 22, "minutes": 140},
+    "N2": {"vocabulary": 28, "grammar": 12, "reading": 32, "listening": 29, "minutes": 155},
+    "N1": {"vocabulary": 25, "grammar": 10, "reading": 34, "listening": 29, "minutes": 170},
+}
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -164,28 +172,56 @@ def quiz_history(db: Session = Depends(get_db)):
 def start_quiz(payload: QuizSessionCreate, db: Session = Depends(get_db)):
     """Create a new quiz session.
 
-    Randomly selects questions matching the requested level (and optionally
-    question type), shuffles each question's answer options, pre-creates
-    QuizAnswer rows (with null user_answer), and returns the session id plus
-    the list of shuffled questions.
+    When full_exam=True, selects the real JLPT question counts per type for the
+    given level. Otherwise randomly selects num_questions from all matching questions.
+    Always orders by JLPT exam order: vocabulary → grammar → reading → listening.
     """
-    query = db.query(Question).filter(Question.level == payload.level)
-    if payload.question_type:
-        query = query.filter(Question.question_type == payload.question_type)
-
-    all_matching: list[Question] = query.all()
-    if not all_matching:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="No questions found for the specified filters.",
-        )
-
-    num = min(payload.num_questions, len(all_matching))
-    selected_raw: list[Question] = random.sample(all_matching, num)
-
-    # Sort by JLPT exam order: vocabulary → grammar → reading → listening
     TYPE_ORDER = {"vocabulary": 0, "grammar": 1, "reading": 2, "listening": 3}
-    selected = sorted(selected_raw, key=lambda q: TYPE_ORDER.get(q.question_type, 9))
+    total_minutes: Optional[int] = None
+
+    if payload.full_exam and payload.level in JLPT_STRUCTURE:
+        structure = JLPT_STRUCTURE[payload.level]
+        total_minutes = structure["minutes"]
+        selected: list[Question] = []
+
+        for qtype, count in structure.items():
+            if qtype == "minutes":
+                continue
+            if payload.question_type and qtype != payload.question_type:
+                continue
+            pool = (
+                db.query(Question)
+                .filter(Question.level == payload.level, Question.question_type == qtype)
+                .all()
+            )
+            if not pool:
+                continue
+            take = min(count, len(pool))
+            selected.extend(random.sample(pool, take))
+
+        if not selected:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No questions found for the specified filters.",
+            )
+
+        selected = sorted(selected, key=lambda q: TYPE_ORDER.get(q.question_type, 9))
+        num = len(selected)
+    else:
+        query = db.query(Question).filter(Question.level == payload.level)
+        if payload.question_type:
+            query = query.filter(Question.question_type == payload.question_type)
+
+        all_matching: list[Question] = query.all()
+        if not all_matching:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No questions found for the specified filters.",
+            )
+
+        num = min(payload.num_questions, len(all_matching))
+        selected_raw: list[Question] = random.sample(all_matching, num)
+        selected = sorted(selected_raw, key=lambda q: TYPE_ORDER.get(q.question_type, 9))
 
     # Persist the session first (flush to obtain session.id)
     session = QuizSession(
@@ -218,7 +254,7 @@ def start_quiz(payload: QuizSessionCreate, db: Session = Depends(get_db)):
 
     db.commit()
 
-    return QuizStartResponse(session_id=session.id, questions=quiz_questions)
+    return QuizStartResponse(session_id=session.id, questions=quiz_questions, total_minutes=total_minutes)
 
 
 # ---------------------------------------------------------------------------

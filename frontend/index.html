@@ -37,48 +37,69 @@
 
     <div class="card">
       <div class="card-title">📝 Thiết lập bài thi</div>
-      <div class="quiz-setup-grid">
-        <div class="form-group">
-          <label class="form-label">Cấp độ</label>
-          <select id="sel-level" class="form-select">
-            <option value="">-- Chọn cấp độ --</option>
-            <option value="N5">N5 (Sơ cấp)</option>
-            <option value="N4">N4 (Cơ bản)</option>
-            <option value="N3">N3 (Trung cấp)</option>
-            <option value="N2">N2 (Cao cấp)</option>
-            <option value="N1">N1 (Thượng cấp)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Loại câu hỏi</label>
-          <select id="sel-type" class="form-select">
-            <option value="">Tất cả loại</option>
-            <option value="vocabulary">Từ vựng (文字・語彙)</option>
-            <option value="grammar">Ngữ pháp (文法)</option>
-            <option value="reading">Đọc hiểu (読解)</option>
-            <option value="listening">Nghe hiểu (聴解)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Số câu hỏi</label>
-          <select id="sel-num" class="form-select">
-            <option value="5">5 câu</option>
-            <option value="10" selected>10 câu</option>
-            <option value="20">20 câu</option>
-            <option value="30">30 câu</option>
-          </select>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button id="btn-mode-practice" class="btn btn-primary btn-sm" onclick="setQuizMode('practice')">✏️ Luyện tập nhanh</button>
+        <button id="btn-mode-full" class="btn btn-outline btn-sm" onclick="setQuizMode('full')">🎌 Thi thử đầy đủ</button>
+      </div>
+
+      <div id="practice-options">
+        <div class="quiz-setup-grid">
+          <div class="form-group">
+            <label class="form-label">Cấp độ</label>
+            <select id="sel-level" class="form-select">
+              <option value="">-- Chọn cấp độ --</option>
+              <option value="N5">N5 (Sơ cấp)</option>
+              <option value="N4">N4 (Cơ bản)</option>
+              <option value="N3">N3 (Trung cấp)</option>
+              <option value="N2">N2 (Cao cấp)</option>
+              <option value="N1">N1 (Thượng cấp)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Loại câu hỏi</label>
+            <select id="sel-type" class="form-select">
+              <option value="">Tất cả loại</option>
+              <option value="vocabulary">Từ vựng (文字・語彙)</option>
+              <option value="grammar">Ngữ pháp (文法)</option>
+              <option value="reading">Đọc hiểu (読解)</option>
+              <option value="listening">Nghe hiểu (聴解)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số câu hỏi</label>
+            <select id="sel-num" class="form-select">
+              <option value="5">5 câu</option>
+              <option value="10" selected>10 câu</option>
+              <option value="20">20 câu</option>
+              <option value="30">30 câu</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      <div id="full-exam-options" style="display:none;">
+        <div class="quiz-setup-grid">
+          <div class="form-group">
+            <label class="form-label">Cấp độ</label>
+            <select id="sel-level-full" class="form-select">
+              <option value="">-- Chọn cấp độ --</option>
+              <option value="N5">N5 — 62 câu · 105 phút</option>
+              <option value="N4">N4 — 67 câu · 115 phút</option>
+              <option value="N3">N3 — 90 câu · 140 phút</option>
+              <option value="N2">N2 — 101 câu · 155 phút</option>
+              <option value="N1">N1 — 98 câu · 170 phút</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+          Đề thi đầy đủ theo cấu trúc JLPT thực tế: từ vựng → ngữ pháp → đọc hiểu → nghe hiểu.
+        </p>
+      </div>
+
       <button id="btn-start" class="btn btn-primary btn-lg" onclick="startQuiz()">
         ▶ Bắt đầu làm bài
       </button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📊 Thống kê câu hỏi</div>
-      <div id="stats-grid" class="stats-grid">
-        <div class="stat-card"><div class="stat-number">…</div><div class="stat-label">Đang tải...</div></div>
-      </div>
     </div>
 
     <div class="card">
@@ -203,12 +224,22 @@
   <!-- ════ TRANG QUẢN LÝ ════ -->
   <div id="page-admin" class="page">
     <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📊 Thống kê câu hỏi</span>
+        <button class="btn btn-outline btn-sm" onclick="loadStats()">Làm mới</button>
+      </div>
+      <div id="stats-grid" class="stats-grid">
+        <div class="stat-card"><div class="stat-number">…</div><div class="stat-label">Đang tải...</div></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-title">⚙️ Quản lý dữ liệu câu hỏi</div>
 
       <div style="margin-bottom:20px;">
         <div class="card-title" style="font-size:0.95rem;">📥 Dữ liệu mẫu</div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
-          Nạp khoảng 100 câu hỏi mẫu N1–N5 (từ vựng, ngữ pháp, đọc hiểu) vào cơ sở dữ liệu.
+          Nạp 200+ câu hỏi mẫu mỗi cấp độ N1–N5 (từ vựng, ngữ pháp, đọc hiểu, nghe hiểu) vào cơ sở dữ liệu.
         </p>
         <button id="btn-seed" class="btn btn-success" onclick="loadSeedData()">
           📥 Nạp dữ liệu mẫu

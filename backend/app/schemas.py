@@ -69,6 +69,7 @@ class QuizSessionCreate(BaseModel):
     level: str
     question_type: Optional[str] = None   # None means all types
     num_questions: int = 10
+    full_exam: bool = False               # True = use real JLPT question counts
 
 
 class QuizSessionOut(BaseModel):
@@ -122,3 +123,4 @@ class QuizResult(BaseModel):
 class QuizStartResponse(BaseModel):
     session_id: int
     questions: list[QuestionForQuiz]
+    total_minutes: Optional[int] = None   # set when full_exam=True
