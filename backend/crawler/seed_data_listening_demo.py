@@ -228,6 +228,7 @@ LISTENING_DEMO = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "女の人はどこへ行きますか。",
         "option_a": "リビング",
         "option_b": "キッチン",
@@ -248,6 +249,7 @@ LISTENING_DEMO = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "山田さんが日本語会話のクラスを受けるのは何曜日ですか。",
         "option_a": "月曜日と水曜日",
         "option_b": "火曜日と金曜日",
@@ -269,6 +271,7 @@ LISTENING_DEMO = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "病院はどこにありますか。",
         "option_a": "駅の隣",
         "option_b": "公園の南",
@@ -290,6 +293,7 @@ LISTENING_DEMO = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "このお店の売上が一番多かったのは何月ですか。",
         "option_a": "1月",
         "option_b": "3月",

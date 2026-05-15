@@ -21,6 +21,8 @@ class QuestionBase(BaseModel):
     explanation: Optional[str] = None
     source_url: Optional[str] = None
     audio_url: Optional[str] = None
+    image_url: Optional[str] = None
+    is_active: bool = True
 
 
 class QuestionCreate(QuestionBase):

@@ -191,7 +191,11 @@ def start_quiz(payload: QuizSessionCreate, db: Session = Depends(get_db)):
                 continue
             pool = (
                 db.query(Question)
-                .filter(Question.level == payload.level, Question.question_type == qtype)
+                .filter(
+                    Question.level == payload.level,
+                    Question.question_type == qtype,
+                    Question.is_active == True,
+                )
                 .all()
             )
             if not pool:
@@ -208,7 +212,10 @@ def start_quiz(payload: QuizSessionCreate, db: Session = Depends(get_db)):
         selected = sorted(selected, key=lambda q: TYPE_ORDER.get(q.question_type, 9))
         num = len(selected)
     else:
-        query = db.query(Question).filter(Question.level == payload.level)
+        query = db.query(Question).filter(
+            Question.level == payload.level,
+            Question.is_active == True,
+        )
         if payload.question_type:
             query = query.filter(Question.question_type == payload.question_type)
 

@@ -14,6 +14,9 @@ const state = {
     totalTime: 0,
     timers: {},         // questionId -> seconds spent
     questionStartTime: null,
+    audioLoading: {},   // questionId -> bool
+    audioLoaded: {},    // questionId -> url
+    passageVisible: {}, // questionId -> bool
   },
   stats: null,
 };
@@ -156,6 +159,9 @@ async function startQuiz() {
     state.quiz.currentIndex = 0;
     state.quiz.answers = {};
     state.quiz.timers = {};
+    state.quiz.audioLoading = {};
+    state.quiz.audioLoaded = {};
+    state.quiz.passageVisible = {};
     state.quiz.totalTime = totalMins * 60;
     state.quiz.timeLeft = state.quiz.totalTime;
 
@@ -224,38 +230,57 @@ function renderQuestion() {
   document.getElementById('quiz-level-badge').innerHTML =
     `<span class="badge badge-${q.level}">${q.level}</span> <span class="badge badge-${q.question_type}">${typeLabel(q.question_type)}</span>`;
 
-  // Listening media (audio player + optional image)
+  // Passage (reading) / Listening (on-demand audio + toggle text)
   const mediaEl = document.getElementById('quiz-listening-media');
+  const passageEl = document.getElementById('quiz-passage');
+
   if (q.question_type === 'listening') {
-    let mediaHtml = '';
-    if (q.image_url) {
-      mediaHtml += `<img src="${escHtml(q.image_url)}" alt="Hình minh họa" class="listening-image">`;
+    // Image luôn hiển thị (nếu có)
+    const imgHtml = q.image_url
+      ? `<img src="${escHtml(q.image_url)}" alt="Hình minh họa" class="listening-image">`
+      : '';
+
+    const audioUrl = state.quiz.audioLoaded[q.id] || q.audio_url || '';
+    const isLoading = !!state.quiz.audioLoading[q.id];
+    const passageShown = !!state.quiz.passageVisible[q.id];
+
+    let controlHtml = '';
+    if (isLoading) {
+      controlHtml = `<div class="audio-loading">⏳ Đang tạo audio...</div>`;
+    } else if (audioUrl) {
+      controlHtml = `
+        <audio controls autoplay class="audio-player" src="${escHtml(audioUrl)}"></audio>
+        <button class="btn-listen btn-listen-toggle" onclick="togglePassage(${q.id})">
+          ${passageShown ? '📝 Ẩn nội dung' : '📝 Xem nội dung hội thoại'}
+        </button>`;
+    } else {
+      controlHtml = `
+        <button class="btn-listen" onclick="requestAudio(${q.id})">
+          🎧 Nghe và xem nội dung
+        </button>`;
     }
-    if (q.audio_url) {
-      mediaHtml += `
-        <div class="listening-label">🎧 Nhấn play để nghe</div>
-        <audio controls class="audio-player" src="${escHtml(q.audio_url)}">
-          Trình duyệt không hỗ trợ audio.
-        </audio>`;
+
+    mediaEl.innerHTML = imgHtml + controlHtml;
+    mediaEl.style.display = 'block';
+
+    // Passage text (ẩn/hiện theo state)
+    if (q.passage && passageShown) {
+      passageEl.innerHTML = `<div class="listening-label">📝 Nội dung hội thoại</div>${escHtml(q.passage)}`;
+      passageEl.className = 'passage-box listening-box';
+      passageEl.style.display = 'block';
+    } else {
+      passageEl.style.display = 'none';
     }
-    mediaEl.innerHTML = mediaHtml;
-    mediaEl.style.display = (q.audio_url || q.image_url) ? 'block' : 'none';
   } else {
     mediaEl.innerHTML = '';
     mediaEl.style.display = 'none';
-  }
-
-  // Passage / Listening transcript
-  const passageEl = document.getElementById('quiz-passage');
-  if (q.passage) {
-    const isListening = q.question_type === 'listening';
-    passageEl.innerHTML = isListening
-      ? `<div class="listening-label">📝 Nội dung hội thoại</div>${escHtml(q.passage)}`
-      : escHtml(q.passage);
-    passageEl.className = `passage-box${isListening ? ' listening-box' : ''}`;
-    passageEl.style.display = 'block';
-  } else {
-    passageEl.style.display = 'none';
+    if (q.passage) {
+      passageEl.textContent = q.passage;
+      passageEl.className = 'passage-box';
+      passageEl.style.display = 'block';
+    } else {
+      passageEl.style.display = 'none';
+    }
   }
 
   // Question text
@@ -304,6 +329,35 @@ function typeLabel(t) {
 
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Listening: TTS on-demand + toggle passage ──────────
+async function requestAudio(questionId) {
+  const q = state.quiz.questions.find(x => x.id === questionId);
+  if (!q) return;
+
+  state.quiz.audioLoading[questionId] = true;
+  renderQuestion();
+
+  const text = [q.passage, q.question_text].filter(Boolean).join('\n\n');
+  try {
+    const res = await apiFetch('/audio-api/generate', {
+      method: 'POST',
+      body: JSON.stringify({ text, question_id: questionId }),
+    });
+    state.quiz.audioLoaded[questionId] = res.audio_url;
+    state.quiz.passageVisible[questionId] = true;
+  } catch (e) {
+    toast('Không thể tạo audio: ' + e.message, 'error');
+  } finally {
+    state.quiz.audioLoading[questionId] = false;
+    renderQuestion();
+  }
+}
+
+function togglePassage(questionId) {
+  state.quiz.passageVisible[questionId] = !state.quiz.passageVisible[questionId];
+  renderQuestion();
 }
 
 // ── Select Answer ──────────────────────────────────────

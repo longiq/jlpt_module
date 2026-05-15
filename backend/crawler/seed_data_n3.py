@@ -989,6 +989,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、田中さんが来週の月曜日にできないことは何ですか。",
         "option_a": "会議に出席すること",
         "option_b": "資料を準備すること",
@@ -1002,6 +1003,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話で、女性が注文を変えた理由は何ですか。",
         "option_a": "値段が高かったから",
         "option_b": "アレルギーがあったから",
@@ -1015,6 +1017,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、二人は何について話し合っていますか。",
         "option_a": "新入社員の研修プログラム",
         "option_b": "会社の年末パーティーの計画",
@@ -1028,6 +1031,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話で、学生は先生に何を相談していますか。",
         "option_a": "卒業論文のテーマの変更",
         "option_b": "アルバイトの紹介",
@@ -1041,6 +1045,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の内容から、男性はこの後どうすることになりましたか。",
         "option_a": "すぐに銀行に行く",
         "option_b": "ATMで手続きをする",
@@ -1054,6 +1059,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話で、二人が話している主な内容は何ですか。",
         "option_a": "新しいスポーツジムの開業",
         "option_b": "運動不足を解消するための取り組み",
@@ -1067,6 +1073,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、イベントの変更点は何ですか。",
         "option_a": "開催場所が変わった",
         "option_b": "参加費が上がった",
@@ -1080,6 +1087,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、上司が部下に頼んだことは何ですか。",
         "option_a": "クライアントへのメールを送ること",
         "option_b": "会議室を予約すること",
@@ -1093,6 +1101,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話で、女の子が学校を休んだ理由は何ですか。",
         "option_a": "旅行に行っていたから",
         "option_b": "発熱で体調が悪かったから",
@@ -1106,6 +1115,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話で、二人はどこに食事に行くことにしましたか。",
         "option_a": "イタリア料理のレストラン",
         "option_b": "焼き肉のお店",
@@ -1119,6 +1129,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、引っ越しの手伝いをできない理由は何ですか。",
         "option_a": "体調が悪いから",
         "option_b": "仕事が入っているから",
@@ -1132,6 +1143,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話で、商品について男性が確認したことは何ですか。",
         "option_a": "商品の色の種類",
         "option_b": "返品の条件",
@@ -1145,6 +1157,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、二人の先生はどんなことを心配していますか。",
         "option_a": "生徒の成績が下がっていること",
         "option_b": "来月の修学旅行の準備が遅れていること",
@@ -1158,6 +1171,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の中で、図書館について述べられていることは何ですか。",
         "option_a": "来週から改装のため閉館する",
         "option_b": "開館時間が延長された",
@@ -1171,6 +1185,7 @@ N3_LISTENING = [
     {
         "level": "N3",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "会話の内容から、この後二人はどうすることにしましたか。",
         "option_a": "すぐに会議を始める",
         "option_b": "資料を確認してから会議の日程を決める",

@@ -598,6 +598,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "二人は何について話していますか。",
         "option_a": "週末の旅行計画",
         "option_b": "会議の準備と資料の確認",
@@ -611,6 +612,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "女性は何が問題だと言っていますか。",
         "option_a": "資料全体が分かりにくい",
         "option_b": "3ページ目のグラフが分かりにくい",
@@ -624,6 +626,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "男性はこの後何をしますか。",
         "option_a": "新しい資料を作る",
         "option_b": "会議を延期する",
@@ -637,6 +640,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "女性が店員に最初に聞いたことは何ですか。",
         "option_a": "商品の値段",
         "option_b": "この商品が別の色で売っているかどうか",
@@ -650,6 +654,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この店ではどの色のバッグが買えますか。",
         "option_a": "青・黒・紺",
         "option_b": "赤・青・黒",
@@ -663,6 +668,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "女性は最終的にどうしましたか。",
         "option_a": "青いバッグを買った",
         "option_b": "黒いバッグを見せてもらうことにした",
@@ -676,6 +682,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "二人は何について話していますか。",
         "option_a": "レポートの締め切りと提出方法",
         "option_b": "授業の時間割の変更",
@@ -689,6 +696,7 @@ N2_LISTENING = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "レポートの締め切りはいつですか。",
         "option_a": "来週の月曜日",
         "option_b": "金曜日の授業が終わるまで",
@@ -1233,6 +1241,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "二人は何について話していますか。",
         "option_a": "新しいアルバイトの探し方",
         "option_b": "プロジェクトの締め切りと作業分担",
@@ -1246,6 +1255,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "女性はどの作業が終わっていないと言っていますか。",
         "option_a": "デザイン部分",
         "option_b": "プレゼンの準備",
@@ -1259,6 +1269,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "男性はこの後何をすることになりましたか。",
         "option_a": "デザインを修正する",
         "option_b": "データ集計を手伝う",
@@ -1272,6 +1283,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "二人は何について話していますか。",
         "option_a": "引っ越し先のマンションの条件",
         "option_b": "駅前の新しいカフェ",
@@ -1285,6 +1297,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "男性が駅近を勧める理由は何ですか。",
         "option_a": "駅近のほうが家賃が安いから",
         "option_b": "通勤が楽だから",
@@ -1298,6 +1311,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "男性が駅近でない場合の条件として挙げているものは何ですか。",
         "option_a": "駐車場があること",
         "option_b": "バス路線があること",
@@ -1311,6 +1325,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "二人は何について話していますか。",
         "option_a": "新しいスマートフォンの購入を検討していること",
         "option_b": "健康のための食生活の改善",
@@ -1324,6 +1339,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "女性が勧めている改善策はどれですか。",
         "option_a": "毎朝ジョギングをすること",
         "option_b": "肉食をやめること",
@@ -1337,6 +1353,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "男性の悩みは何ですか。",
         "option_a": "睡眠が十分に取れていないこと",
         "option_b": "野菜をあまり食べていないこと",
@@ -1350,6 +1367,7 @@ N2_EXTRA = [
     {
         "level": "N2",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "二人の会話から分かることは何ですか。",
         "option_a": "女性はすでにセミナーに参加したことがある",
         "option_b": "男性はセミナーへの参加を迷っている",

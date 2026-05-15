@@ -10,6 +10,7 @@ from .database import SessionLocal, engine
 from .models import Base, Question
 from .routers import questions, quiz
 from .routers import crawler as crawler_router_module
+from .routers import audio as audio_router_module
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(questions.router, prefix="/questions")
 app.include_router(quiz.router, prefix="/quiz")
 app.include_router(crawler_router_module.router, prefix="/crawler")
+app.include_router(audio_router_module.router, prefix="/audio-api")
 
 # ---------------------------------------------------------------------------
 # Startup: create DB tables, optionally seed data
@@ -62,18 +64,24 @@ def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
 
     # Migrate: add new nullable columns to existing tables if missing
+    from sqlalchemy import text as _text
     with engine.connect() as conn:
-        for col, col_type in [("image_url", "TEXT")]:
+        for col, col_type in [("image_url", "TEXT"), ("is_active", "INTEGER DEFAULT 1")]:
             try:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        f"ALTER TABLE questions ADD COLUMN {col} {col_type}"
-                    )
-                )
+                conn.execute(_text(f"ALTER TABLE questions ADD COLUMN {col} {col_type}"))
                 conn.commit()
                 print(f"[migration] Added column questions.{col}")
             except Exception:
                 pass  # column already exists
+
+        # Deactivate text-only listening questions (no audio)
+        result = conn.execute(_text(
+            "UPDATE questions SET is_active = 0 "
+            "WHERE question_type = 'listening' AND (audio_url IS NULL OR audio_url = '')"
+        ))
+        conn.commit()
+        if result.rowcount:
+            print(f"[migration] Deactivated {result.rowcount} text-only listening question(s)")
 
     # Always sync seed questions on startup (insert missing, skip duplicates)
     db = SessionLocal()
@@ -108,6 +116,15 @@ def on_startup() -> None:
     finally:
         db.close()
 
+
+# ---------------------------------------------------------------------------
+# Serve media static files (audio / images) — not tracked in git
+# ---------------------------------------------------------------------------
+_STATIC_DIR = os.path.normpath(os.path.join(_HERE, "..", "..", "static"))
+for _subdir, _mount in [("audio", "/audio"), ("images", "/images")]:
+    _media_dir = os.path.join(_STATIC_DIR, _subdir)
+    os.makedirs(_media_dir, exist_ok=True)
+    app.mount(_mount, StaticFiles(directory=_media_dir), name=_subdir)
 
 # ---------------------------------------------------------------------------
 # Serve frontend static files (if the frontend directory exists)

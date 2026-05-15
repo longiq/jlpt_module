@@ -925,6 +925,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、二人はどこで会いますか。",
         "option_a": "駅",
         "option_b": "図書館",
@@ -938,6 +939,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、男の人は何を注文しますか。",
         "option_a": "コーヒー",
         "option_b": "紅茶",
@@ -951,6 +953,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "このアナウンスによると、電車はいつ来ますか。",
         "option_a": "3分後",
         "option_b": "5分後",
@@ -964,6 +967,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、女の人はどこに行きますか。",
         "option_a": "病院",
         "option_b": "スーパー",
@@ -977,6 +981,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、二人は何を食べますか。",
         "option_a": "すし",
         "option_b": "ラーメン",
@@ -990,6 +995,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、宿題はいつまでですか。",
         "option_a": "今日",
         "option_b": "明日",
@@ -1003,6 +1009,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、図書館は何時に閉まりますか。",
         "option_a": "5時",
         "option_b": "6時",
@@ -1016,6 +1023,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "このアナウンスによると、何が見つかりましたか。",
         "option_a": "かぎ",
         "option_b": "財布",
@@ -1029,6 +1037,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、男の人は今何をしていますか。",
         "option_a": "ご飯を食べている",
         "option_b": "テレビを見ている",
@@ -1042,6 +1051,7 @@ N5_LISTENING = [
     {
         "level": "N5",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、女の人はどんなシャツを探していますか。",
         "option_a": "白いシャツ",
         "option_b": "青いシャツ",
@@ -1977,6 +1987,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、二人はどこに行くことになりましたか。",
         "option_a": "映画館",
         "option_b": "美術館",
@@ -1990,6 +2001,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "このアナウンスによると、何のために列に並ぶ必要がありますか。",
         "option_a": "コンサートのチケットを買うため",
         "option_b": "サインをもらうため",
@@ -2003,6 +2015,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、女の人はなぜ遅刻しましたか。",
         "option_a": "道に迷ったから",
         "option_b": "電車が遅れたから",
@@ -2016,6 +2029,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、田中さんの試験の結果はどうでしたか。",
         "option_a": "合格した",
         "option_b": "不合格だった",
@@ -2029,6 +2043,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、男の人は何の薬が必要ですか。",
         "option_a": "頭痛薬",
         "option_b": "胃薬",
@@ -2042,6 +2057,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、女の人はこれから何をしますか。",
         "option_a": "仕事を続ける",
         "option_b": "友達に電話する",
@@ -2055,6 +2071,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "このラジオ番組によると、明日の午後の天気はどうなりますか。",
         "option_a": "晴れる",
         "option_b": "曇りになる",
@@ -2068,6 +2085,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、男の人はどんなアパートを探していますか。",
         "option_a": "駅に近くて、広いアパート",
         "option_b": "家賃が安くて、静かなアパート",
@@ -2081,6 +2099,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、部長はなぜ会議に参加できませんか。",
         "option_a": "出張中だから",
         "option_b": "体調が悪いから",
@@ -2094,6 +2113,7 @@ N4_LISTENING = [
     {
         "level": "N4",
         "question_type": "listening",
+        "is_active": False,
         "question_text": "この会話によると、二人は何を決めましたか。",
         "option_a": "旅行の場所",
         "option_b": "旅行の日程",
