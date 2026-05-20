@@ -1,19 +1,26 @@
 """
-Crawler for han-nichi.vercel.app — an internal Japanese language learning app.
+Crawler for han-nichi.vercel.app via Supabase Storage.
 
-Authentication strategy (tried in order):
-  1. NextAuth.js credentials flow: GET /api/auth/csrf → POST /api/auth/signin/credentials
-  2. Simple JSON login: POST /api/login
-  3. Simple JSON login: POST /api/auth/login
+Architecture discovered:
+  - Frontend: han-nichi.vercel.app (Next.js on Vercel)
+  - Backend:  uvyccqmvcxrctjqxnhgd.supabase.co (Supabase)
+  - Data:     JSON files in Supabase Storage bucket "jlpt"
+  - Naming:   {LEVEL}-{YEAR}-{MONTH}-{SESSION}.json
+              e.g. N2-2025-7-1.json
 
-After a successful login the session cookies are retained automatically by
-``requests.Session``.  Data is fetched via JSON API endpoints and mapped to
-the Question schema used by this project.
+Authentication:
+  Priority 1 — Supabase email/password login
+  Priority 2 — Bearer token passed directly (from browser DevTools)
+
+Usage (standalone):
+  python scripts/run_hannichi_crawl.py --level N2 --dry-run
+  python scripts/run_hannichi_crawl.py --level all --token "eyJhbGci..." --save-to-db
 """
 
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import Any, Optional
 
@@ -23,46 +30,54 @@ from .base import BaseCrawler
 
 logger = logging.getLogger(__name__)
 
-SITE_BASE = "https://han-nichi.vercel.app"
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
 
-# Ordered list of API endpoints to probe for question data.
-# Each entry is a URL template; {level} and {type} are substituted at runtime.
-CANDIDATE_ENDPOINTS: list[str] = [
-    "/api/questions?level={level}&type={type}",
-    "/api/questions?level={level}&question_type={type}",
-    "/api/questions/{level}/{type}",
-    "/api/quiz?level={level}&type={type}",
-    "/api/vocabulary?level={level}",
-    "/api/grammar?level={level}",
-    "/api/reading?level={level}",
-    "/api/words?level={level}",
-    "/api/questions?level={level}",
-    "/api/questions",
+SUPABASE_URL = "https://uvyccqmvcxrctjqxnhgd.supabase.co"
+STORAGE_BUCKET = "jlpt"
+
+JLPT_LEVELS = ["N1", "N2", "N3", "N4", "N5"]
+# JLPT exams are held in July (7) and December (12).
+EXAM_MONTHS = [7, 12]
+# Cover recent years; extend as needed.
+EXAM_YEARS = [2023, 2024, 2025, 2026]
+# Multiple sessions per exam day (usually 1–2).
+EXAM_SESSIONS = [1, 2]
+
+# Field-name alternatives for flexible JSON mapping.
+QUESTION_TEXT_KEYS = [
+    "question_text", "question", "text", "content", "stem",
+    "câu_hỏi", "question_jp", "mondai",
 ]
-
-# Field name alternatives for question text.
-QUESTION_TEXT_KEYS = ["question_text", "question", "text", "content", "stem", "câu_hỏi", "title"]
-# Field name alternatives for answer choices.
-OPTIONS_KEYS = ["options", "choices", "answers", "selections"]
-# Field name alternatives for the correct answer.
-CORRECT_KEYS = ["correct_answer", "correctAnswer", "answer", "correct", "key", "solution"]
-# Field name alternatives for explanation.
-EXPLANATION_KEYS = ["explanation", "explain", "giải_thích", "note", "hint", "reason"]
-# Field name alternatives for a reading passage.
-PASSAGE_KEYS = ["passage", "reading", "context", "text", "content", "đoạn_văn"]
+OPTIONS_KEYS = ["options", "choices", "answers", "selections", "sentakushi"]
+CORRECT_KEYS = [
+    "correct_answer", "correctAnswer", "answer", "correct",
+    "key", "solution", "seikai",
+]
+EXPLANATION_KEYS = [
+    "explanation", "explain", "giải_thích", "note", "hint",
+    "reason", "kaisetsu",
+]
+PASSAGE_KEYS = [
+    "passage", "reading", "context", "text", "content",
+    "đoạn_văn", "mondaibun",
+]
 
 ANSWER_LABELS = ("A", "B", "C", "D")
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
 def _clean(value: Any) -> str:
-    """Coerce *value* to a stripped string."""
     if value is None:
         return ""
     return " ".join(str(value).split())
 
 
 def _pick(obj: dict, keys: list[str], default: Any = None) -> Any:
-    """Return the first value found in *obj* for any key in *keys*."""
     for k in keys:
         if k in obj:
             return obj[k]
@@ -70,7 +85,6 @@ def _pick(obj: dict, keys: list[str], default: Any = None) -> Any:
 
 
 def _index_to_label(index: Any) -> str:
-    """Convert a 0-based integer index (or string '0'-'3') to 'A'-'D'."""
     try:
         i = int(index)
         return ANSWER_LABELS[i] if 0 <= i < 4 else ""
@@ -78,231 +92,276 @@ def _index_to_label(index: Any) -> str:
         return ""
 
 
+# ---------------------------------------------------------------------------
+# Main crawler class
+# ---------------------------------------------------------------------------
+
 class HanNichiCrawler(BaseCrawler):
-    """Crawler targeting https://han-nichi.vercel.app (requires authentication)."""
+    """
+    Crawler for han-nichi.vercel.app via Supabase Storage JSON files.
+
+    Data is stored as signed-URL-accessible JSON objects in the "jlpt" bucket
+    under the naming scheme::
+
+        {LEVEL}-{YEAR}-{MONTH}-{SESSION}.json
+        e.g. N2-2025-7-1.json
+    """
 
     def __init__(
         self,
         username: str = "duyhai",
         password: str = "Abc12345",
-        delay: float = 1.5,
+        token: Optional[str] = None,
+        delay: float = 1.0,
     ) -> None:
-        super().__init__(base_url=SITE_BASE, delay=delay)
+        """
+        Args:
+            username: Supabase auth email or username.
+            password: Supabase auth password.
+            token:    Pre-obtained Bearer token (skips login step when provided).
+            delay:    Seconds to sleep between HTTP requests.
+        """
+        super().__init__(base_url=SUPABASE_URL, delay=delay)
         self.username = username
         self.password = password
-        self._authenticated = False
-        # Accept JSON in addition to HTML.
+        self._token: Optional[str] = token
+        self._authenticated: bool = token is not None
         self.session.headers.update({
-            "Accept": "application/json, text/html, */*",
+            "Accept": "application/json",
             "Content-Type": "application/json",
         })
+        if token:
+            self._apply_token(token)
 
     # ------------------------------------------------------------------
     # Authentication
     # ------------------------------------------------------------------
 
+    def _apply_token(self, token: str) -> None:
+        self._token = token
+        self.session.headers["Authorization"] = f"Bearer {token}"
+
     def authenticate(self) -> bool:
-        """Attempt login via all known strategies.  Returns True on success."""
+        """Login via Supabase Auth.  Returns True on success."""
         if self._authenticated:
             return True
 
-        logger.info("[hannichi] attempting authentication as '%s'", self.username)
+        logger.info("[hannichi] authenticating as '%s'", self.username)
 
-        if self._try_nextauth():
-            self._authenticated = True
-            logger.info("[hannichi] authenticated via NextAuth.js")
-            return True
+        # Try email-as-is, then common email suffixes.
+        email_candidates = [self.username]
+        if "@" not in self.username:
+            email_candidates += [
+                f"{self.username}@gmail.com",
+                f"{self.username}@hannichi.com",
+                f"{self.username}@han-nichi.com",
+            ]
 
-        if self._try_simple_login("/api/login"):
-            self._authenticated = True
-            logger.info("[hannichi] authenticated via /api/login")
-            return True
+        for email in email_candidates:
+            if self._try_supabase_login(email):
+                self._authenticated = True
+                logger.info("[hannichi] authenticated with email: %s", email)
+                return True
 
-        if self._try_simple_login("/api/auth/login"):
-            self._authenticated = True
-            logger.info("[hannichi] authenticated via /api/auth/login")
-            return True
-
-        logger.error("[hannichi] all authentication strategies failed")
+        logger.error("[hannichi] all login attempts failed")
         return False
 
-    def _try_nextauth(self) -> bool:
-        """NextAuth.js credentials provider flow."""
-        try:
-            time.sleep(self.delay)
-            csrf_resp = self.session.get(
-                f"{self.base_url}/api/auth/csrf", timeout=15
-            )
-            if csrf_resp.status_code != 200:
-                logger.debug("[hannichi] /api/auth/csrf → %s", csrf_resp.status_code)
-                return False
-
-            csrf_token = csrf_resp.json().get("csrfToken", "")
-            if not csrf_token:
-                logger.debug("[hannichi] csrfToken not found in response")
-                return False
-
-            time.sleep(self.delay)
-            signin_resp = self.session.post(
-                f"{self.base_url}/api/auth/signin/credentials",
-                json={
-                    "username": self.username,
-                    "password": self.password,
-                    "csrfToken": csrf_token,
-                    "redirect": "false",
-                    "callbackUrl": self.base_url,
-                },
-                timeout=15,
-                allow_redirects=True,
-            )
-
-            if signin_resp.status_code in (200, 302):
-                # Verify we actually got a session by calling /api/auth/session
-                time.sleep(self.delay)
-                session_resp = self.session.get(
-                    f"{self.base_url}/api/auth/session", timeout=15
-                )
-                if session_resp.status_code == 200:
-                    data = session_resp.json()
-                    if data.get("user") or data.get("token"):
-                        return True
-
-            logger.debug(
-                "[hannichi] NextAuth flow returned %s", signin_resp.status_code
-            )
-        except Exception as exc:
-            logger.debug("[hannichi] NextAuth flow error: %s", exc)
-        return False
-
-    def _try_simple_login(self, path: str) -> bool:
-        """Try a simple JSON POST to *path* with username/password."""
-        try:
-            time.sleep(self.delay)
-            resp = self.session.post(
-                f"{self.base_url}{path}",
-                json={"username": self.username, "password": self.password},
-                timeout=15,
-                allow_redirects=True,
-            )
-            if resp.status_code in (200, 201):
-                body = {}
-                try:
-                    body = resp.json()
-                except Exception:
-                    pass
-                # Accept if response contains a token or user data, or is just 200 OK.
-                if (
-                    body.get("token")
-                    or body.get("accessToken")
-                    or body.get("access_token")
-                    or body.get("user")
-                    or body.get("success")
-                    or resp.status_code == 200
-                ):
-                    token = (
-                        body.get("token")
-                        or body.get("accessToken")
-                        or body.get("access_token")
-                    )
-                    if token:
-                        self.session.headers.update(
-                            {"Authorization": f"Bearer {token}"}
-                        )
-                    return True
-            logger.debug("[hannichi] %s → %s", path, resp.status_code)
-        except Exception as exc:
-            logger.debug("[hannichi] %s error: %s", path, exc)
-        return False
-
-    # ------------------------------------------------------------------
-    # JSON fetch helper
-    # ------------------------------------------------------------------
-
-    def fetch_json(self, url: str) -> Optional[Any]:
-        """GET *url* and return parsed JSON, or None on error."""
+    def _try_supabase_login(self, email: str) -> bool:
         time.sleep(self.delay)
         try:
-            resp = self.session.get(url, timeout=15)
-            resp.raise_for_status()
-            return resp.json()
-        except requests.exceptions.HTTPError as exc:
-            logger.debug("[hannichi] HTTP error %s: %s", url, exc)
-        except requests.exceptions.ConnectionError as exc:
-            logger.debug("[hannichi] Connection error %s: %s", url, exc)
-        except requests.exceptions.Timeout:
-            logger.debug("[hannichi] Timeout %s", url)
+            resp = self.session.post(
+                f"{SUPABASE_URL}/auth/v1/token?grant_type=password",
+                json={"email": email, "password": self.password},
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                token = data.get("access_token") or data.get("token")
+                if token:
+                    self._apply_token(token)
+                    return True
+            logger.debug(
+                "[hannichi] login %s → %s: %s",
+                email, resp.status_code, resp.text[:120],
+            )
         except Exception as exc:
-            logger.debug("[hannichi] fetch_json error %s: %s", url, exc)
-        return None
+            logger.debug("[hannichi] login error for %s: %s", email, exc)
+        return False
 
     # ------------------------------------------------------------------
-    # Endpoint discovery
+    # Storage helpers
     # ------------------------------------------------------------------
 
-    def _discover_endpoint(self, level: str, question_type: str) -> Optional[str]:
+    def _list_bucket(self) -> list[str]:
         """
-        Try candidate endpoints and return the first that returns usable data.
-        Returns the full URL string, or None if nothing worked.
+        List all objects in the 'jlpt' storage bucket.
+        Returns a list of file paths (e.g. ['N2-2025-7-1.json', ...]).
         """
-        for template in CANDIDATE_ENDPOINTS:
-            url = self.base_url + template.format(level=level, type=question_type)
-            logger.debug("[hannichi] probing %s", url)
-            data = self.fetch_json(url)
-            if data is None:
-                continue
-            records = self._extract_records(data)
-            if records:
-                logger.info(
-                    "[hannichi] found %d record(s) at %s", len(records), url
-                )
-                return url
-            logger.debug("[hannichi] %s returned data but no records", url)
-
-        logger.warning(
-            "[hannichi] no working endpoint found for level=%s type=%s",
-            level,
-            question_type,
-        )
-        return None
-
-    def _extract_records(self, data: Any) -> list[dict]:
-        """Normalise API response to a flat list of record dicts."""
-        if isinstance(data, list):
-            return [r for r in data if isinstance(r, dict)]
-        if isinstance(data, dict):
-            # Unwrap common envelope patterns.
-            for key in ("data", "questions", "items", "results", "records", "content"):
-                inner = data.get(key)
-                if isinstance(inner, list):
-                    return [r for r in inner if isinstance(r, dict)]
-            # Response itself might be a single question record.
-            if any(k in data for k in QUESTION_TEXT_KEYS):
-                return [data]
+        time.sleep(self.delay)
+        try:
+            resp = self.session.post(
+                f"{SUPABASE_URL}/storage/v1/object/list/{STORAGE_BUCKET}",
+                json={"limit": 1000, "offset": 0, "prefix": ""},
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                items = resp.json()
+                paths = [item["name"] for item in items if item.get("name")]
+                logger.info("[hannichi] bucket listing: %d files found", len(paths))
+                return paths
+            logger.warning(
+                "[hannichi] bucket list failed: %s %s",
+                resp.status_code, resp.text[:200],
+            )
+        except Exception as exc:
+            logger.warning("[hannichi] bucket list error: %s", exc)
         return []
+
+    def _get_signed_url(self, file_path: str) -> Optional[str]:
+        """Generate a fresh 5-minute signed URL for *file_path*."""
+        time.sleep(self.delay)
+        try:
+            resp = self.session.post(
+                f"{SUPABASE_URL}/storage/v1/object/sign/{STORAGE_BUCKET}/{file_path}",
+                json={"expiresIn": 300},
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                signed = data.get("signedURL") or data.get("signedUrl")
+                if signed:
+                    # Make absolute if relative.
+                    if signed.startswith("/"):
+                        signed = SUPABASE_URL + signed
+                    return signed
+            logger.debug(
+                "[hannichi] sign URL for %s → %s", file_path, resp.status_code
+            )
+        except Exception as exc:
+            logger.debug("[hannichi] sign URL error %s: %s", file_path, exc)
+        return None
+
+    def _download_json(self, file_path: str) -> Optional[Any]:
+        """Download and parse a JSON file from storage."""
+        # Strategy 1: signed URL
+        signed = self._get_signed_url(file_path)
+        if signed:
+            try:
+                resp = requests.get(signed, timeout=15)
+                if resp.status_code == 200:
+                    return resp.json()
+                logger.debug(
+                    "[hannichi] signed download %s → %s", file_path, resp.status_code
+                )
+            except Exception as exc:
+                logger.debug("[hannichi] signed download error: %s", exc)
+
+        # Strategy 2: authenticated direct download
+        time.sleep(self.delay)
+        try:
+            resp = self.session.get(
+                f"{SUPABASE_URL}/storage/v1/object/{STORAGE_BUCKET}/{file_path}",
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                return resp.json()
+            logger.debug(
+                "[hannichi] direct download %s → %s", file_path, resp.status_code
+            )
+        except Exception as exc:
+            logger.debug("[hannichi] direct download error: %s", exc)
+        return None
+
+    def _candidate_files(self, level: str) -> list[str]:
+        """
+        Return the full list of candidate file paths for *level*.
+        Tries real bucket listing first; falls back to enumeration.
+        """
+        bucket_files = self._list_bucket()
+        if bucket_files:
+            pattern = re.compile(
+                rf"^{re.escape(level)}-\d+-\d+-\d+\.json$", re.IGNORECASE
+            )
+            matched = [f for f in bucket_files if pattern.match(f)]
+            if matched:
+                logger.info(
+                    "[hannichi] found %d file(s) for %s in bucket", len(matched), level
+                )
+                return sorted(matched)
+
+        # Enumerate known exam dates.
+        candidates = []
+        for year in EXAM_YEARS:
+            for month in EXAM_MONTHS:
+                for session in EXAM_SESSIONS:
+                    candidates.append(f"{level}-{year}-{month}-{session}.json")
+        logger.info(
+            "[hannichi] using %d enumerated candidates for %s", len(candidates), level
+        )
+        return candidates
 
     # ------------------------------------------------------------------
     # Question mapping
     # ------------------------------------------------------------------
 
-    def _map_to_question(
+    def _map_questions_from_file(
+        self,
+        data: Any,
+        level: str,
+        question_type: str,
+        source_url: str,
+    ) -> list[dict]:
+        """Convert raw JSON file contents to a list of Question dicts."""
+        records: list[dict] = []
+
+        if isinstance(data, list):
+            raw_records = [r for r in data if isinstance(r, dict)]
+        elif isinstance(data, dict):
+            # Unwrap common envelope keys.
+            raw_records = []
+            for key in (
+                "questions", "data", "items", "results",
+                question_type, level,
+            ):
+                inner = data.get(key)
+                if isinstance(inner, list):
+                    raw_records = [r for r in inner if isinstance(r, dict)]
+                    break
+            if not raw_records:
+                # Might be a single question object.
+                if any(k in data for k in QUESTION_TEXT_KEYS):
+                    raw_records = [data]
+        else:
+            return []
+
+        for raw in raw_records:
+            q = self._map_single(raw, level, question_type, source_url)
+            if q:
+                records.append(q)
+        return records
+
+    def _map_single(
         self,
         raw: dict,
         level: str,
         question_type: str,
         source_url: str,
     ) -> Optional[dict]:
-        """Map a raw API record to a Question dict.  Returns None if unusable."""
         question_text = _clean(_pick(raw, QUESTION_TEXT_KEYS))
         if not question_text:
             return None
 
-        # --- options -------------------------------------------------------
+        # Options -------------------------------------------------------
         options_raw = _pick(raw, OPTIONS_KEYS)
         option_a = option_b = option_c = option_d = ""
 
         if isinstance(options_raw, list):
-            texts = [_clean(o.get("text", o) if isinstance(o, dict) else o)
-                     for o in options_raw]
+            texts = []
+            for o in options_raw:
+                if isinstance(o, dict):
+                    texts.append(_clean(o.get("text") or o.get("value") or o.get("label") or ""))
+                else:
+                    texts.append(_clean(o))
             texts += [""] * (4 - len(texts))
             option_a, option_b, option_c, option_d = texts[:4]
         elif isinstance(options_raw, dict):
@@ -311,49 +370,64 @@ class HanNichiCrawler(BaseCrawler):
             option_c = _clean(options_raw.get("C") or options_raw.get("c") or "")
             option_d = _clean(options_raw.get("D") or options_raw.get("d") or "")
         else:
-            # Try direct A/B/C/D keys on the record.
             option_a = _clean(raw.get("A") or raw.get("option_a") or raw.get("optionA") or "")
             option_b = _clean(raw.get("B") or raw.get("option_b") or raw.get("optionB") or "")
             option_c = _clean(raw.get("C") or raw.get("option_c") or raw.get("optionC") or "")
             option_d = _clean(raw.get("D") or raw.get("option_d") or raw.get("optionD") or "")
 
         if not option_a:
-            return None  # Minimum: at least option A must exist.
+            return None
 
-        # --- correct answer ------------------------------------------------
+        # Correct answer ------------------------------------------------
         raw_correct = _pick(raw, CORRECT_KEYS, "")
-        if isinstance(raw_correct, int) or (
-            isinstance(raw_correct, str) and raw_correct.isdigit()
-        ):
-            correct_answer = _index_to_label(raw_correct)
-        elif isinstance(raw_correct, str) and raw_correct.upper() in ANSWER_LABELS:
-            correct_answer = raw_correct.upper()
-        else:
-            # If correct is an option dict with a 'text' key, match against options.
-            correct_text = _clean(
-                raw_correct.get("text", "") if isinstance(raw_correct, dict) else raw_correct
-            )
-            opts = [option_a, option_b, option_c, option_d]
-            if correct_text and correct_text in opts:
-                correct_answer = ANSWER_LABELS[opts.index(correct_text)]
+        if isinstance(raw_correct, (int, float)):
+            correct_answer = _index_to_label(int(raw_correct))
+        elif isinstance(raw_correct, str):
+            if raw_correct.upper() in ANSWER_LABELS:
+                correct_answer = raw_correct.upper()
+            elif raw_correct.isdigit():
+                correct_answer = _index_to_label(raw_correct)
             else:
-                correct_answer = "A"  # Default fallback.
+                # Try matching text against options.
+                opts = [option_a, option_b, option_c, option_d]
+                ct = _clean(raw_correct)
+                correct_answer = (
+                    ANSWER_LABELS[opts.index(ct)] if ct in opts else "A"
+                )
+        elif isinstance(raw_correct, dict):
+            ct = _clean(raw_correct.get("text", ""))
+            opts = [option_a, option_b, option_c, option_d]
+            correct_answer = ANSWER_LABELS[opts.index(ct)] if ct in opts else "A"
+        else:
+            correct_answer = "A"
 
-        # --- explanation ---------------------------------------------------
+        # Explanation & passage -----------------------------------------
         explanation = _clean(_pick(raw, EXPLANATION_KEYS, ""))
-
-        # --- passage (reading questions) -----------------------------------
         passage = ""
         if question_type == "reading":
             passage = _clean(_pick(raw, PASSAGE_KEYS, ""))
 
-        # --- level override ------------------------------------------------
+        # Level override ------------------------------------------------
         raw_level = _clean(_pick(raw, ["level", "jlpt", "jlpt_level"], ""))
-        resolved_level = raw_level.upper() if raw_level.upper() in ("N1","N2","N3","N4","N5") else level
+        resolved_level = (
+            raw_level.upper()
+            if raw_level.upper() in ("N1", "N2", "N3", "N4", "N5")
+            else level
+        )
+
+        # Question type override ----------------------------------------
+        raw_type = _clean(_pick(raw, ["question_type", "type", "category", "mondai_type"], ""))
+        type_map = {
+            "vocab": "vocabulary", "vocabulary": "vocabulary", "tu_vung": "vocabulary",
+            "grammar": "grammar", "ngu_phap": "grammar", "bunpo": "grammar",
+            "reading": "reading", "doc_hieu": "reading", "dokkai": "reading",
+            "listening": "listening", "nghe": "listening", "choukai": "listening",
+        }
+        resolved_type = type_map.get(raw_type.lower(), question_type)
 
         return {
             "level": resolved_level,
-            "question_type": question_type,
+            "question_type": resolved_type,
             "question_text": question_text,
             "option_a": option_a,
             "option_b": option_b,
@@ -369,78 +443,88 @@ class HanNichiCrawler(BaseCrawler):
     # Core crawl logic
     # ------------------------------------------------------------------
 
-    def crawl(self, level: str, question_type: str, max_pages: int = 5) -> list[dict]:
+    def crawl(
+        self,
+        level: str,
+        question_type: str,
+        max_pages: int = 10,
+    ) -> list[dict]:
         """
-        Authenticate, discover the data endpoint, and return question dicts.
+        Download JSON exam files for *level* and return Question dicts.
 
         Args:
-            level:         JLPT level, e.g. ``"N3"``.
-            question_type: ``"vocabulary"`` | ``"grammar"`` | ``"reading"``.
-            max_pages:     Maximum paginated pages to fetch.
+            level:         JLPT level string, e.g. ``"N2"``.
+            question_type: ``"vocabulary"`` | ``"grammar"`` | ``"reading"``
+                           | ``"listening"``.
+            max_pages:     Maximum number of files to download (each exam
+                           date = one file).
 
         Returns:
-            List of question dicts; empty if auth or endpoint discovery fails.
+            List of question dicts conforming to the project schema.
         """
         logger.info(
-            "[hannichi] crawl start — level=%s type=%s max_pages=%s",
-            level, question_type, max_pages,
+            "[hannichi] crawl start — level=%s type=%s", level, question_type
         )
 
-        if not self.authenticate():
+        if not self._authenticated and not self.authenticate():
             return []
 
-        endpoint_url = self._discover_endpoint(level, question_type)
-        if endpoint_url is None:
-            return []
-
+        candidates = self._candidate_files(level)
         all_questions: list[dict] = []
         seen: set[str] = set()
+        files_tried = 0
 
-        for page in range(1, max_pages + 1):
-            # Build paginated URL.
-            sep = "&" if "?" in endpoint_url else "?"
-            if max_pages > 1:
-                paged_url = f"{endpoint_url}{sep}page={page}&limit=50"
-            else:
-                paged_url = endpoint_url
+        for file_path in candidates:
+            if files_tried >= max_pages:
+                break
 
-            logger.info("[hannichi] fetching page %d: %s", page, paged_url)
-            data = self.fetch_json(paged_url)
+            logger.info("[hannichi] downloading %s", file_path)
+            data = self._download_json(file_path)
+            files_tried += 1
+
             if data is None:
-                logger.warning("[hannichi] page %d fetch failed; stopping", page)
-                break
+                logger.debug("[hannichi] %s not found or error, skipping", file_path)
+                continue
 
-            records = self._extract_records(data)
-            if not records:
-                logger.info("[hannichi] no records on page %d; stopping", page)
-                break
-
-            new_count = 0
-            for raw in records:
-                q = self._map_to_question(raw, level, question_type, paged_url)
-                if q is None:
-                    continue
-                key = q["question_text"]
-                if key in seen:
-                    continue
-                seen.add(key)
-                all_questions.append(q)
-                new_count += 1
-
-            logger.info(
-                "[hannichi] page %d: %d new questions (total: %d)",
-                page, new_count, len(all_questions),
+            source_url = f"{SUPABASE_URL}/storage/v1/object/{STORAGE_BUCKET}/{file_path}"
+            questions = self._map_questions_from_file(
+                data, level, question_type, source_url
             )
 
-            if new_count == 0:
-                logger.info("[hannichi] no new questions; stopping pagination")
-                break
+            new = 0
+            for q in questions:
+                key = q["question_text"]
+                if key not in seen:
+                    seen.add(key)
+                    all_questions.append(q)
+                    new += 1
 
-            # Stop if we got fewer records than requested (last page).
-            if len(records) < 50:
-                break
+            logger.info(
+                "[hannichi] %s → %d questions (%d new, total=%d)",
+                file_path, len(questions), new, len(all_questions),
+            )
 
         logger.info(
-            "[hannichi] crawl complete — %d questions returned", len(all_questions)
+            "[hannichi] crawl complete — %d questions from %d file(s)",
+            len(all_questions), files_tried,
         )
         return all_questions
+
+    def crawl_all_levels(
+        self,
+        question_type: str = "all",
+        max_files_per_level: int = 10,
+    ) -> list[dict]:
+        """Convenience method: crawl all 5 JLPT levels at once."""
+        all_q: list[dict] = []
+        types = (
+            ["vocabulary", "grammar", "reading", "listening"]
+            if question_type == "all"
+            else [question_type]
+        )
+        for level in JLPT_LEVELS:
+            for qtype in types:
+                all_q.extend(
+                    self.crawl(level, qtype, max_pages=max_files_per_level)
+                )
+        return all_q
