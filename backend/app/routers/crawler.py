@@ -14,7 +14,7 @@ class CrawlRequest(BaseModel):
     level: str
     question_type: Optional[str] = None
     max_pages: int = 3
-    source: str = "dethitiengnhat"  # "dethitiengnhat" | "lophoctiengnhat"
+    source: str = "dethitiengnhat"  # "dethitiengnhat" | "lophoctiengnhat" | "hannichi"
 
 
 class CrawlResponse(BaseModel):
@@ -35,6 +35,9 @@ def run_crawler(payload: CrawlRequest, db: Session = Depends(get_db)):
         if payload.source == "lophoctiengnhat":
             from backend.crawler.lophoctiengnhat import LophoctiengnhatCrawler
             crawler = LophoctiengnhatCrawler()
+        elif payload.source == "hannichi":
+            from backend.crawler.hannichi import HanNichiCrawler
+            crawler = HanNichiCrawler()
         else:
             from backend.crawler.dethitiengnhat import DethitiengnhatCrawler
             crawler = DethitiengnhatCrawler()
